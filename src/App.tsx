@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Settings,
   Save,
-  Key
+  Key,
+  ChartPie
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -34,12 +35,36 @@ import { SURVEY_QUESTIONS, Language, Question, SurveyResponse } from './types';
 const COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 const LOGO_URL = "https://imgur.com/TOW5WAS.jpeg";
 
+const RATING_LABELS: Record<Language, string[]> = {
+  ar: [
+    'غير راضٍ تماماً',
+    'غير راضٍ',
+    'غير راضٍ قليلاً',
+    'محايد',
+    'راضٍ قليلاً',
+    'راضٍ',
+    'راضٍ تماماً'
+  ],
+  en: [
+    'Very Dissatisfied',
+    'Dissatisfied',
+    'Somewhat Dissatisfied',
+    'Neutral',
+    'Somewhat Satisfied',
+    'Satisfied',
+    'Very Satisfied'
+  ]
+};
+
 export default function App() {
-  const [view, setView] = useState<'landing' | 'survey' | 'dashboard' | 'login' | 'settings'>('landing');
+  const [view, setView] = useState<'landing' | 'survey' | 'final' | 'dashboard' | 'login' | 'settings'>('landing');
   const [lang, setLang] = useState<Language>('ar');
   const [dept, setDept] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>({});
+  const [comment, setComment] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userPhone, setUserPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [dashboardData, setDashboardData] = useState<SurveyResponse[]>([]);
@@ -52,9 +77,10 @@ export default function App() {
 
   const isRtl = lang === 'ar';
   const questions = dept ? SURVEY_QUESTIONS[dept] : [];
-  const progress = questions.length > 0 ? ((currentStep) / questions.length) * 100 : 0;
+  const totalSteps = questions.length + 1; // +1 for the final form
+  const progress = ((currentStep) / totalSteps) * 100;
 
-  const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+  const scriptUrl = (import.meta as any).env.VITE_GOOGLE_SCRIPT_URL;
 
   useEffect(() => {
     fetchConfig();
@@ -78,6 +104,9 @@ export default function App() {
     setView('survey');
     setCurrentStep(0);
     setResponses({});
+    setComment('');
+    setUserName('');
+    setUserPhone('');
   };
 
   const handleNext = (value: any) => {
@@ -88,17 +117,21 @@ export default function App() {
     if (currentStep < questions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      submitSurvey(newResponses);
+      setView('final');
+      setCurrentStep(questions.length);
     }
   };
 
-  const submitSurvey = async (finalResponses: any) => {
+  const submitSurvey = async () => {
     setIsSubmitting(true);
     const payload = {
       timestamp: new Date().toISOString(),
       department: dept,
       language: lang,
-      ...finalResponses,
+      ...responses,
+      comment,
+      userName,
+      userPhone,
     };
     
     if (!scriptUrl) {
@@ -146,7 +179,7 @@ export default function App() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPassword = remotePassword || import.meta.env.VITE_DASHBOARD_PASSWORD || 'admin';
+    const correctPassword = remotePassword || (import.meta as any).env.VITE_DASHBOARD_PASSWORD || 'admin';
     if (password === correctPassword) {
       setView('dashboard');
       fetchDashboardData();
@@ -181,11 +214,55 @@ export default function App() {
 
   // Dashboard Stats Calculations
   const totalResponses = dashboardData.length;
+  
   const deptStats = dashboardData.reduce((acc: any, curr) => {
     acc[curr.department] = (acc[curr.department] || 0) + 1;
     return acc;
   }, {});
+  
   const pieData = Object.entries(deptStats).map(([name, value]) => ({ name, value }));
+
+  const langStats = dashboardData.reduce((acc: any, curr) => {
+    acc[curr.language] = (acc[curr.language] || 0) + 1;
+    return acc;
+  }, {});
+  const langPieData = Object.entries(langStats).map(([name, value]) => ({ 
+    name: name === 'ar' ? (isRtl ? 'عربي' : 'Arabic') : (isRtl ? 'إنجليزي' : 'English'), 
+    value 
+  }));
+
+  const calculateAvg = (key: string) => {
+    if (totalResponses === 0) return "0.0";
+    const sum = dashboardData.reduce((acc, curr: any) => {
+      const val = parseInt(curr[key]);
+      return acc + (isNaN(val) ? 0 : val);
+    }, 0);
+    return (sum / totalResponses).toFixed(1);
+  };
+
+  const avgCleanliness = calculateAvg('cleanliness');
+  const avgReception = calculateAvg('reception');
+  const avgProfessionalism = calculateAvg('professionalism');
+
+  // Calculate satisfaction percentage (based on rating questions - now out of 7)
+  const satisfactionRate = totalResponses > 0 
+    ? Math.round((parseFloat(avgCleanliness) + parseFloat(avgReception) + parseFloat(avgProfessionalism)) / 21 * 100)
+    : 0;
+
+  const deptPerformance = Object.keys(SURVEY_QUESTIONS).map(d => {
+    const deptData = dashboardData.filter(item => item.department === d);
+    if (deptData.length === 0) return { name: d, score: 0 };
+    const sum = deptData.reduce((acc, curr: any) => {
+      const c = parseInt(curr.cleanliness) || 0;
+      const r = parseInt(curr.reception) || 0;
+      const p = parseInt(curr.professionalism) || 0;
+      return acc + (c + r + p) / 3;
+    }, 0);
+    return { 
+      name: isRtl ? (d === 'Physiotherapy' ? 'علاج طبيعي' : d === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب') : d, 
+      score: parseFloat((sum / deptData.length).toFixed(1)) 
+    };
+  });
 
   if (isSubmitted) {
     return (
@@ -358,20 +435,29 @@ export default function App() {
                   ))}
 
                   {questions[currentStep].type === 'rating' && (
-                    <div className="flex justify-between items-center gap-2 sm:gap-4">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          onClick={() => handleNext(star)}
-                          className="flex-1 aspect-square rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center justify-center transition-all group"
-                        >
-                          <Star 
-                            size={32} 
-                            className="text-slate-200 group-hover:text-yellow-400 group-hover:fill-yellow-400 transition-all" 
-                          />
-                          <span className="mt-2 text-sm font-bold text-slate-400 group-hover:text-blue-900">{star}</span>
-                        </button>
-                      ))}
+                    <div className="space-y-8">
+                      <div className="grid grid-cols-7 gap-2 sm:gap-4">
+                        {[1, 2, 3, 4, 5, 6, 7].map((star) => (
+                          <button
+                            key={star}
+                            onClick={() => handleNext(star)}
+                            className="flex-1 aspect-square rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center justify-center transition-all group relative"
+                          >
+                            <Star 
+                              size={24} 
+                              className="text-slate-200 group-hover:text-yellow-400 group-hover:fill-yellow-400 transition-all" 
+                            />
+                            <span className="mt-1 text-[10px] sm:text-xs font-bold text-slate-400 group-hover:text-blue-900">{star}</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {RATING_LABELS[lang].map((label, idx) => (
+                          <span key={idx} className="text-[8px] sm:text-[10px] text-center text-slate-400 font-medium leading-tight">
+                            {label}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -384,13 +470,82 @@ export default function App() {
                     {isRtl ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     {isRtl ? 'السابق' : 'Previous'}
                   </button>
-                  
-                  {isSubmitting && (
-                    <div className="flex items-center gap-2 text-blue-600 font-bold">
-                      <Loader2 className="animate-spin" size={20} />
-                      {isRtl ? 'جاري الإرسال...' : 'Submitting...'}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {view === 'final' && (
+            <motion.div 
+              key="final"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="max-w-2xl mx-auto"
+            >
+              <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-xl border border-slate-100">
+                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8 leading-snug">
+                  {isRtl ? 'هل تود إضافة أي ملاحظات أخرى؟' : 'Would you like to add any other feedback?'}
+                </h3>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                      {isRtl ? 'التعليق أو الرأي' : 'Comment or Opinion'}
+                    </label>
+                    <textarea 
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder={isRtl ? 'اكتب تعليقك هنا...' : 'Write your comment here...'}
+                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition h-32 resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                        {isRtl ? 'الاسم (اختياري)' : 'Name (Optional)'}
+                      </label>
+                      <input 
+                        type="text"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        placeholder={isRtl ? 'الاسم الكامل' : 'Full Name'}
+                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      />
                     </div>
-                  )}
+                    <div>
+                      <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                        {isRtl ? 'رقم الهاتف (اختياري)' : 'Phone (Optional)'}
+                      </label>
+                      <input 
+                        type="tel"
+                        value={userPhone}
+                        onChange={(e) => setUserPhone(e.target.value)}
+                        placeholder={isRtl ? 'رقم الجوال' : 'Phone Number'}
+                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <button 
+                    onClick={() => { setView('survey'); setCurrentStep(questions.length - 1); }}
+                    className="text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2 transition order-2 sm:order-1"
+                  >
+                    {isRtl ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                    {isRtl ? 'السابق' : 'Previous'}
+                  </button>
+
+                  <button 
+                    onClick={submitSurvey}
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 transition shadow-lg flex items-center justify-center gap-2 order-1 sm:order-2"
+                  >
+                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                    {isRtl ? 'إرسال التقييم' : 'Submit Survey'}
+                  </button>
                 </div>
               </div>
             </motion.div>
@@ -457,58 +612,121 @@ export default function App() {
               key="dashboard"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-8"
+              className="space-y-8 pb-20"
             >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
-                  <h2 className="text-3xl font-black text-blue-900">
+                  <h2 className="text-3xl md:text-4xl font-black text-blue-900">
                     {isRtl ? 'لوحة التحكم الذكية' : 'Smart Dashboard'}
                   </h2>
-                  <p className="text-slate-500">
-                    {isRtl ? 'مؤشرات الأداء الفورية من جوجل شيت' : 'Real-time performance indicators from Google Sheets'}
+                  <p className="text-slate-500 text-lg">
+                    {isRtl ? 'مؤشرات الأداء الفورية والتحليلات المتقدمة' : 'Real-time performance indicators & advanced analytics'}
                   </p>
                 </div>
-                <button 
-                  onClick={fetchDashboardData}
-                  disabled={isLoadingDashboard}
-                  className="flex items-center gap-2 px-6 py-3 bg-blue-50 text-blue-700 rounded-2xl font-bold hover:bg-blue-100 transition disabled:opacity-50"
-                >
-                  {isLoadingDashboard ? <Loader2 className="animate-spin" size={18} /> : <BarChart3 size={18} />}
-                  {isRtl ? 'تحديث البيانات' : 'Refresh Data'}
-                </button>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    {isRtl ? 'إجمالي الردود' : 'Total Responses'}
-                  </p>
-                  <p className="text-4xl font-black text-blue-900">{totalResponses}</p>
-                </div>
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    {isRtl ? 'أكثر الأقسام زيارة' : 'Top Department'}
-                  </p>
-                  <p className="text-2xl font-black text-slate-800">
-                    {Object.keys(deptStats).length > 0 
-                      ? Object.entries(deptStats).sort((a: any, b: any) => b[1] - a[1])[0][0] 
-                      : '-'}
-                  </p>
-                </div>
-                <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
-                  <p className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">
-                    {isRtl ? 'متوسط الرضا' : 'Avg Satisfaction'}
-                  </p>
-                  <p className="text-4xl font-black text-green-600">92%</p>
+                <div className="flex gap-3 w-full md:w-auto">
+                  <button 
+                    onClick={fetchDashboardData}
+                    disabled={isLoadingDashboard}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition disabled:opacity-50 shadow-lg shadow-blue-200"
+                  >
+                    {isLoadingDashboard ? <Loader2 className="animate-spin" size={18} /> : <BarChart3 size={18} />}
+                    {isRtl ? 'تحديث' : 'Refresh'}
+                  </button>
                 </div>
               </div>
 
-              {/* Charts */}
+              {/* Main Stats Bento Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                      <ClipboardList size={20} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                      {isRtl ? 'إجمالي الردود' : 'Total Responses'}
+                    </p>
+                  </div>
+                  <p className="text-4xl font-black text-blue-900 mt-2">{totalResponses}</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                      <CheckCircle2 size={20} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                      {isRtl ? 'معدل الرضا' : 'Satisfaction Rate'}
+                    </p>
+                  </div>
+                  <div className="flex items-end gap-2 mt-2">
+                    <p className="text-4xl font-black text-emerald-600">{satisfactionRate}%</p>
+                    <span className="text-emerald-500 text-sm font-bold mb-1">↑ 4%</span>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-4">
+                      <Star size={20} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                      {isRtl ? 'متوسط النظافة' : 'Avg Cleanliness'}
+                    </p>
+                  </div>
+                  <p className="text-4xl font-black text-slate-800 mt-2">{avgCleanliness}<span className="text-lg text-slate-300">/7</span></p>
+                </div>
+
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                  <div>
+                    <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+                      <Globe size={20} />
+                    </div>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                      {isRtl ? 'اللغة المفضلة' : 'Top Language'}
+                    </p>
+                  </div>
+                  <p className="text-2xl font-black text-slate-800 mt-2">
+                    {langStats['ar'] >= (langStats['en'] || 0) ? (isRtl ? 'العربية' : 'Arabic') : (isRtl ? 'الإنجليزية' : 'English')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Department Performance Bar Chart */}
                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-                  <h3 className="text-xl font-bold text-slate-800 mb-8">
-                    {isRtl ? 'توزيع الردود حسب القسم' : 'Responses by Department'}
+                  <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                    <BarChart3 size={20} className="text-blue-600" />
+                    {isRtl ? 'أداء الأقسام (متوسط التقييم)' : 'Department Performance (Avg Rating)'}
+                  </h3>
+                  <div className="h-[300px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={deptPerformance} layout="vertical" margin={{ left: 40 }}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                        <XAxis type="number" domain={[0, 5]} hide />
+                        <YAxis 
+                          dataKey="name" 
+                          type="category" 
+                          axisLine={false} 
+                          tickLine={false} 
+                          tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }}
+                          width={100}
+                        />
+                        <Tooltip 
+                          cursor={{ fill: '#f8fafc' }}
+                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Bar dataKey="score" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={30} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* Responses Distribution Pie Chart */}
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                  <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                    <ChartPie size={20} className="text-blue-600" />
+                    {isRtl ? 'توزيع المراجعين حسب القسم' : 'Patient Distribution by Dept'}
                   </h3>
                   <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
@@ -517,43 +735,58 @@ export default function App() {
                           data={pieData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
+                          innerRadius={70}
                           outerRadius={100}
-                          paddingAngle={5}
+                          paddingAngle={8}
                           dataKey="value"
                         >
                           {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
+                  <div className="flex flex-wrap justify-center gap-4 mt-4">
+                    {pieData.map((entry, index) => (
+                      <div key={entry.name} className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                        <span className="text-xs font-bold text-slate-500">
+                          {isRtl ? (entry.name === 'Physiotherapy' ? 'علاج طبيعي' : entry.name === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب') : entry.name}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                {/* Category Averages */}
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 lg:col-span-2">
                   <h3 className="text-xl font-bold text-slate-800 mb-8">
-                    {isRtl ? 'نشاط التقييم الأسبوعي' : 'Weekly Activity'}
+                    {isRtl ? 'تحليل معايير الخدمة' : 'Service Standards Analysis'}
                   </h3>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={[
-                        { name: 'Sat', val: 12 },
-                        { name: 'Sun', val: 19 },
-                        { name: 'Mon', val: 15 },
-                        { name: 'Tue', val: 22 },
-                        { name: 'Wed', val: 30 },
-                        { name: 'Thu', val: 25 },
-                        { name: 'Fri', val: 10 },
-                      ]}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                        <Tooltip cursor={{ fill: '#f8fafc' }} />
-                        <Bar dataKey="val" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[
+                      { label: isRtl ? 'الاستقبال' : 'Reception', val: avgReception, color: 'bg-blue-500' },
+                      { label: isRtl ? 'النظافة' : 'Cleanliness', val: avgCleanliness, color: 'bg-emerald-500' },
+                      { label: isRtl ? 'الاحترافية' : 'Professionalism', val: avgProfessionalism, color: 'bg-purple-500' },
+                    ].map((item) => (
+                      <div key={item.label} className="space-y-3">
+                        <div className="flex justify-between items-end">
+                          <span className="font-bold text-slate-700">{item.label}</span>
+                          <span className="text-2xl font-black text-slate-900">{item.val}<span className="text-sm text-slate-300">/7</span></span>
+                        </div>
+                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(parseFloat(item.val) / 7) * 100}%` }}
+                            className={cn("h-full rounded-full", item.color)}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

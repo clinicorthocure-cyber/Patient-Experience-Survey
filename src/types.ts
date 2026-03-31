@@ -18,9 +18,8 @@ export const SURVEY_QUESTIONS: Record<string, Question[]> = {
   Physiotherapy: [
     {
       id: 'scheduling',
-      type: 'choice',
-      text: { ar: 'تقييم عملية حجز الموعد؟', en: 'Rate appointment scheduling process?' },
-      options: { ar: ['سهل', 'مناسب', 'صعب'], en: ['Easy', 'Convenient', 'Difficult'] }
+      type: 'rating',
+      text: { ar: 'تقييم عملية حجز الموعد؟', en: 'Rate appointment scheduling process?' }
     },
     {
       id: 'reception',
@@ -34,9 +33,8 @@ export const SURVEY_QUESTIONS: Record<string, Question[]> = {
     },
     {
       id: 'waiting',
-      type: 'choice',
-      text: { ar: 'الرضا عن وقت الانتظار؟', en: 'Satisfaction with waiting time?' },
-      options: { ar: ['راضٍ', 'محايد', 'غير راضٍ'], en: ['Satisfied', 'Neutral', 'Not Satisfied'] }
+      type: 'rating',
+      text: { ar: 'الرضا عن وقت الانتظار؟', en: 'Satisfaction with waiting time?' }
     },
     {
       id: 'professionalism',
@@ -45,17 +43,15 @@ export const SURVEY_QUESTIONS: Record<string, Question[]> = {
     },
     {
       id: 'clarity',
-      type: 'choice',
-      text: { ar: 'وضوح شرح الخطة التمارين؟', en: 'Clarity of treatment plan/exercises?' },
-      options: { ar: ['واضح جداً', 'إلى حد ما', 'غير واضح'], en: ['Yes, very clearly', 'Somewhat clearly', 'Not clearly'] }
+      type: 'rating',
+      text: { ar: 'وضوح شرح الخطة التمارين؟', en: 'Clarity of treatment plan/exercises?' }
     }
   ],
   'Doctor Consultation': [
     {
       id: 'scheduling',
-      type: 'choice',
-      text: { ar: 'تقييم عملية حجز الموعد؟', en: 'Rate appointment scheduling process?' },
-      options: { ar: ['سهل', 'مناسب', 'صعب'], en: ['Easy', 'Convenient', 'Difficult'] }
+      type: 'rating',
+      text: { ar: 'تقييم عملية حجز الموعد؟', en: 'Rate appointment scheduling process?' }
     },
     {
       id: 'reception',
@@ -64,9 +60,8 @@ export const SURVEY_QUESTIONS: Record<string, Question[]> = {
     },
     {
       id: 'waiting',
-      type: 'choice',
-      text: { ar: 'الرضا عن وقت الانتظار؟', en: 'Satisfaction with waiting time?' },
-      options: { ar: ['راضٍ', 'محايد', 'غير راضٍ'], en: ['Satisfied', 'Neutral', 'Not Satisfied'] }
+      type: 'rating',
+      text: { ar: 'الرضا عن وقت الانتظار؟', en: 'Satisfaction with waiting time?' }
     },
     {
       id: 'doctor_prof',
@@ -75,17 +70,15 @@ export const SURVEY_QUESTIONS: Record<string, Question[]> = {
     },
     {
       id: 'diagnosis_clarity',
-      type: 'choice',
-      text: { ar: 'وضوح شرح التشخيص والخطة؟', en: 'Clarity of diagnosis and plan?' },
-      options: { ar: ['واضح جداً', 'إلى حد ما', 'غير واضح'], en: ['Yes, very clearly', 'Somewhat clearly', 'Not clearly'] }
+      type: 'rating',
+      text: { ar: 'وضوح شرح التشخيص والخطة؟', en: 'Clarity of diagnosis and plan?' }
     }
   ],
   'MRI Scan': [
     {
       id: 'scheduling',
-      type: 'choice',
-      text: { ar: 'تقييم حجز موعد الأشعة؟', en: 'Rate MRI scheduling process?' },
-      options: { ar: ['سهل', 'مناسب', 'صعب'], en: ['Easy', 'Convenient', 'Difficult'] }
+      type: 'rating',
+      text: { ar: 'تقييم حجز موعد الأشعة؟', en: 'Rate MRI scheduling process?' }
     },
     {
       id: 'facility',

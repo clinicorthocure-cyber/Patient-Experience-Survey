@@ -9,7 +9,9 @@ export default defineConfig(({mode}) => {
     base: '/Patient-Experience-Survey/',
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
+      'import.meta.env.VITE_GOOGLE_SCRIPT_URL': JSON.stringify(env.VITE_GOOGLE_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbyF2kv6HX_l5PSX84InQ6G4kZxipYgLO7uJmC950p-yfNPewAeTlaXGZihfAllKFRdx/exec'),
+      'import.meta.env.VITE_DASHBOARD_PASSWORD': JSON.stringify(env.VITE_DASHBOARD_PASSWORD || 'admin'),
     },
     resolve: {
       alias: {

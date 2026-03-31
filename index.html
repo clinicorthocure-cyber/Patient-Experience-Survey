@@ -4,8 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Orthocure Medical Center | Patient Experience</title>
+    <style>
+      #root:empty::after {
+        content: "Loading Orthocure App...";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: sans-serif;
+        color: #1e40af;
+        font-weight: bold;
+      }
+    </style>
   </head>
   <body>
+    <noscript>You need to enable JavaScript to run this app. / يجب تفعيل الجافا سكريبت لتشغيل التطبيق.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

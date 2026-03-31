@@ -16,84 +16,27 @@ export interface SurveyResponse {
 
 export const SURVEY_QUESTIONS: Record<string, Question[]> = {
   Physiotherapy: [
-    {
-      id: 'scheduling',
-      type: 'rating',
-      text: { ar: 'تقييم عملية حجز الموعد؟', en: 'Rate appointment scheduling process?' }
-    },
-    {
-      id: 'reception',
-      type: 'rating',
-      text: { ar: 'احترافية موظفي الاستقبال؟', en: 'Reception staff professionalism?' }
-    },
-    {
-      id: 'cleanliness',
-      type: 'rating',
-      text: { ar: 'نظافة وراحة العيادة؟', en: 'Cleanliness and comfort of clinic?' }
-    },
-    {
-      id: 'waiting',
-      type: 'rating',
-      text: { ar: 'الرضا عن وقت الانتظار؟', en: 'Satisfaction with waiting time?' }
-    },
-    {
-      id: 'professionalism',
-      type: 'rating',
-      text: { ar: 'احترافية أخصائي العلاج الطبيعي؟', en: 'Physiotherapist professionalism?' }
-    },
-    {
-      id: 'clarity',
-      type: 'rating',
-      text: { ar: 'وضوح شرح الخطة التمارين؟', en: 'Clarity of treatment plan/exercises?' }
-    }
+    { id: 'scheduling', type: 'rating', text: { ar: 'سهولة وسرعة إجراءات حجز الموعد؟', en: 'Ease and speed of appointment booking?' } },
+    { id: 'reception', type: 'rating', text: { ar: 'احترافية وتعاون موظفي الاستقبال عند وصولك؟', en: 'Reception staff professionalism and helpfulness?' } },
+    { id: 'waiting', type: 'rating', text: { ar: 'مدى رضاك عن وقت الانتظار قبل الدخول للموعد؟', en: 'Satisfaction with waiting time before your appointment?' } },
+    { id: 'cleanliness', type: 'rating', text: { ar: 'تقييمك لمستوى النظافة والتعقيم والراحة في العيادة؟', en: 'Clinic cleanliness, hygiene, and comfort levels?' } },
+    { id: 'professionalism', type: 'rating', text: { ar: 'احترافية وكفاءة أخصائي العلاج الطبيعي؟', en: 'Physiotherapist professionalism and expertise?' } },
+    { id: 'clarity', type: 'rating', text: { ar: 'وضوح شرح الخطة العلاجية والتمارين المنزلية؟', en: 'Clarity of treatment plan and home exercises?' } }
   ],
   'Doctor Consultation': [
-    {
-      id: 'scheduling',
-      type: 'rating',
-      text: { ar: 'تقييم عملية حجز الموعد؟', en: 'Rate appointment scheduling process?' }
-    },
-    {
-      id: 'reception',
-      type: 'rating',
-      text: { ar: 'احترافية موظفي الاستقبال؟', en: 'Reception staff professionalism?' }
-    },
-    {
-      id: 'waiting',
-      type: 'rating',
-      text: { ar: 'الرضا عن وقت الانتظار؟', en: 'Satisfaction with waiting time?' }
-    },
-    {
-      id: 'doctor_prof',
-      type: 'rating',
-      text: { ar: 'احترافية الطبيب؟', en: 'Doctor professionalism?' }
-    },
-    {
-      id: 'diagnosis_clarity',
-      type: 'rating',
-      text: { ar: 'وضوح شرح التشخيص والخطة؟', en: 'Clarity of diagnosis and plan?' }
-    }
+    { id: 'scheduling', type: 'rating', text: { ar: 'سهولة وسرعة إجراءات حجز الموعد؟', en: 'Ease and speed of appointment booking?' } },
+    { id: 'reception', type: 'rating', text: { ar: 'احترافية وتعاون موظفي الاستقبال عند وصولك؟', en: 'Reception staff professionalism and helpfulness?' } },
+    { id: 'waiting', type: 'rating', text: { ar: 'مدى رضاك عن وقت الانتظار قبل الدخول للموعد؟', en: 'Satisfaction with waiting time before your appointment?' } },
+    { id: 'cleanliness', type: 'rating', text: { ar: 'تقييمك لمستوى النظافة والتعقيم والراحة في العيادة؟', en: 'Clinic cleanliness, hygiene, and comfort levels?' } },
+    { id: 'professionalism', type: 'rating', text: { ar: 'احترافية الطبيب واهتمامه أثناء الكشف؟', en: 'Doctor professionalism and attentiveness?' } },
+    { id: 'clarity', type: 'rating', text: { ar: 'وضوح شرح التشخيص والخطة العلاجية المقترحة؟', en: 'Clarity of diagnosis and proposed treatment plan?' } }
   ],
   'MRI Scan': [
-    {
-      id: 'scheduling',
-      type: 'rating',
-      text: { ar: 'تقييم حجز موعد الأشعة؟', en: 'Rate MRI scheduling process?' }
-    },
-    {
-      id: 'facility',
-      type: 'rating',
-      text: { ar: 'نظافة مرفق الأشعة؟', en: 'Cleanliness of MRI facility?' }
-    },
-    {
-      id: 'tech_prof',
-      type: 'rating',
-      text: { ar: 'احترافية فني الأشعة؟', en: 'Technologist professionalism?' }
-    },
-    {
-      id: 'comfort',
-      type: 'rating',
-      text: { ar: 'مدى الراحة أثناء الفحص؟', en: 'Comfort level during scan?' }
-    }
+    { id: 'scheduling', type: 'rating', text: { ar: 'سهولة وسرعة إجراءات حجز موعد الأشعة؟', en: 'Ease and speed of MRI appointment booking?' } },
+    { id: 'reception', type: 'rating', text: { ar: 'احترافية وتعاون موظفي الاستقبال عند وصولك؟', en: 'Reception staff professionalism and helpfulness?' } },
+    { id: 'waiting', type: 'rating', text: { ar: 'مدى رضاك عن وقت الانتظار قبل إجراء الأشعة؟', en: 'Satisfaction with waiting time before the scan?' } },
+    { id: 'cleanliness', type: 'rating', text: { ar: 'نظافة وتعقيم غرفة الأشعة والمرافق؟', en: 'Cleanliness and hygiene of the MRI facility?' } },
+    { id: 'professionalism', type: 'rating', text: { ar: 'احترافية فني الأشعة ومدى اهتمامه براحتك؟', en: 'Technologist professionalism and care for your comfort?' } },
+    { id: 'clarity', type: 'rating', text: { ar: 'وضوح التعليمات المعطاة لك قبل وأثناء الفحص؟', en: 'Clarity of instructions given before and during the scan?' } }
   ]
 };

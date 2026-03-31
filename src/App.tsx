@@ -124,18 +124,25 @@ export default function App() {
 
   const submitSurvey = async () => {
     setIsSubmitting(true);
+    
+    // Explicitly ordered payload to match Sheet columns
     const payload = {
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toLocaleString('en-US', { timeZone: 'UTC' }),
       department: dept,
       language: lang,
-      ...responses,
-      comment,
-      userName,
-      userPhone,
+      scheduling: responses.scheduling || 0,
+      reception: responses.reception || 0,
+      waiting: responses.waiting || 0,
+      cleanliness: responses.cleanliness || 0,
+      doctor_prof: responses.doctor_prof || 0,
+      diagnosis_clarity: responses.diagnosis_clarity || 0,
+      comment: comment || '',
+      userName: userName || '',
+      userPhone: userPhone || ''
     };
     
     if (!scriptUrl) {
-      console.warn('Google Script URL not configured. Simulating success.');
+      console.warn('Google Script URL not configured.');
       setTimeout(() => {
         setIsSubmitting(false);
         setIsSubmitted(true);
@@ -147,6 +154,7 @@ export default function App() {
       await fetch(scriptUrl, {
         method: 'POST',
         mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       setIsSubmitting(false);
@@ -195,11 +203,12 @@ export default function App() {
     setIsUpdatingPassword(true);
     
     try {
-      await fetch(`${scriptUrl}?type=updatePassword`, {
+      // Using query parameters for better compatibility with GAS no-cors POST
+      await fetch(`${scriptUrl}?type=updatePassword&newPassword=${encodeURIComponent(newPassword)}`, {
         method: 'POST',
-        mode: 'no-cors',
-        body: JSON.stringify({ password: newPassword }),
+        mode: 'no-cors'
       });
+      
       setRemotePassword(newPassword);
       setNewPassword('');
       alert(isRtl ? 'تم تحديث كلمة المرور بنجاح' : 'Password updated successfully');
@@ -242,11 +251,11 @@ export default function App() {
 
   const avgCleanliness = calculateAvg('cleanliness');
   const avgReception = calculateAvg('reception');
-  const avgProfessionalism = calculateAvg('professionalism');
+  const avgDoctorProf = calculateAvg('doctor_prof');
 
   // Calculate satisfaction percentage (based on rating questions - now out of 7)
   const satisfactionRate = totalResponses > 0 
-    ? Math.round((parseFloat(avgCleanliness) + parseFloat(avgReception) + parseFloat(avgProfessionalism)) / 21 * 100)
+    ? Math.round((parseFloat(avgCleanliness) + parseFloat(avgReception) + parseFloat(avgDoctorProf)) / 21 * 100)
     : 0;
 
   const deptPerformance = Object.keys(SURVEY_QUESTIONS).map(d => {
@@ -255,7 +264,7 @@ export default function App() {
     const sum = deptData.reduce((acc, curr: any) => {
       const c = parseInt(curr.cleanliness) || 0;
       const r = parseInt(curr.reception) || 0;
-      const p = parseInt(curr.professionalism) || 0;
+      const p = parseInt(curr.doctor_prof) || 0;
       return acc + (c + r + p) / 3;
     }, 0);
     return { 
@@ -771,7 +780,7 @@ export default function App() {
                     {[
                       { label: isRtl ? 'الاستقبال' : 'Reception', val: avgReception, color: 'bg-blue-500' },
                       { label: isRtl ? 'النظافة' : 'Cleanliness', val: avgCleanliness, color: 'bg-emerald-500' },
-                      { label: isRtl ? 'الاحترافية' : 'Professionalism', val: avgProfessionalism, color: 'bg-purple-500' },
+                      { label: isRtl ? 'الاحترافية' : 'Professionalism', val: avgDoctorProf, color: 'bg-purple-500' },
                     ].map((item) => (
                       <div key={item.label} className="space-y-3">
                         <div className="flex justify-between items-end">

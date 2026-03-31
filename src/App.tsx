@@ -11,7 +11,10 @@ import {
   LogOut,
   Star,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Settings,
+  Save,
+  Key
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -29,9 +32,10 @@ import { cn } from './lib/utils';
 import { SURVEY_QUESTIONS, Language, Question, SurveyResponse } from './types';
 
 const COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
+const LOGO_URL = "https://imgur.com/TOW5WAS.jpeg";
 
 export default function App() {
-  const [view, setView] = useState<'landing' | 'survey' | 'dashboard' | 'login'>('landing');
+  const [view, setView] = useState<'landing' | 'survey' | 'dashboard' | 'login' | 'settings'>('landing');
   const [lang, setLang] = useState<Language>('ar');
   const [dept, setDept] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(0);
@@ -41,11 +45,33 @@ export default function App() {
   const [dashboardData, setDashboardData] = useState<SurveyResponse[]>([]);
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [password, setPassword] = useState('');
+  const [remotePassword, setRemotePassword] = useState('');
   const [loginError, setLoginError] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const isRtl = lang === 'ar';
   const questions = dept ? SURVEY_QUESTIONS[dept] : [];
   const progress = questions.length > 0 ? ((currentStep) / questions.length) * 100 : 0;
+
+  const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
+
+  useEffect(() => {
+    fetchConfig();
+  }, []);
+
+  const fetchConfig = async () => {
+    if (!scriptUrl) return;
+    try {
+      const response = await fetch(`${scriptUrl}?type=config`);
+      const config = await response.json();
+      if (config.password) {
+        setRemotePassword(config.password);
+      }
+    } catch (error) {
+      console.error('Failed to fetch config:', error);
+    }
+  };
 
   const handleStartSurvey = (selectedDept: string) => {
     setDept(selectedDept);
@@ -74,8 +100,6 @@ export default function App() {
       language: lang,
       ...finalResponses,
     };
-
-    const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
     
     if (!scriptUrl) {
       console.warn('Google Script URL not configured. Simulating success.');
@@ -97,15 +121,12 @@ export default function App() {
     } catch (error) {
       console.error('Submission failed:', error);
       setIsSubmitting(false);
-      // Even if CORS fails, often the data reaches Google Sheets if mode is no-cors
       setIsSubmitted(true);
     }
   };
 
   const fetchDashboardData = async () => {
     setIsLoadingDashboard(true);
-    const scriptUrl = import.meta.env.VITE_GOOGLE_SCRIPT_URL;
-    
     if (!scriptUrl) {
       setDashboardData([]);
       setIsLoadingDashboard(false);
@@ -125,13 +146,36 @@ export default function App() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const correctPassword = import.meta.env.VITE_DASHBOARD_PASSWORD || 'admin';
+    const correctPassword = remotePassword || import.meta.env.VITE_DASHBOARD_PASSWORD || 'admin';
     if (password === correctPassword) {
       setView('dashboard');
       fetchDashboardData();
       setLoginError(false);
     } else {
       setLoginError(true);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) return;
+    setIsUpdatingPassword(true);
+    
+    try {
+      await fetch(`${scriptUrl}?type=updatePassword`, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({ password: newPassword }),
+      });
+      setRemotePassword(newPassword);
+      setNewPassword('');
+      alert(isRtl ? 'تم تحديث كلمة المرور بنجاح' : 'Password updated successfully');
+      setView('dashboard');
+    } catch (error) {
+      console.error('Failed to update password:', error);
+      alert(isRtl ? 'فشل تحديث كلمة المرور' : 'Failed to update password');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -176,9 +220,12 @@ export default function App() {
       {/* Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-700 p-2 rounded-xl text-white">
-            <ClipboardList size={24} />
-          </div>
+          <img 
+            src={LOGO_URL} 
+            alt="Orthocure Logo" 
+            className="h-10 w-auto object-contain"
+            referrerPolicy="no-referrer"
+          />
           <h1 className="text-xl font-extrabold tracking-tight text-blue-900 hidden sm:block">
             ORTHOCURE
           </h1>
@@ -203,14 +250,22 @@ export default function App() {
             </button>
           )}
           
-          {view === 'dashboard' && (
-            <button 
-              onClick={() => setView('landing')}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 transition text-sm font-medium"
-            >
-              <LogOut size={16} />
-              {isRtl ? 'خروج' : 'Logout'}
-            </button>
+          {(view === 'dashboard' || view === 'settings') && (
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setView(view === 'settings' ? 'dashboard' : 'settings')}
+                className="p-2 text-slate-500 hover:text-blue-700 transition"
+              >
+                <Settings size={24} />
+              </button>
+              <button 
+                onClick={() => setView('landing')}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 transition text-sm font-medium"
+              >
+                <LogOut size={16} />
+                {isRtl ? 'خروج' : 'Logout'}
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -502,6 +557,58 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          )}
+
+          {view === 'settings' && (
+            <motion.div 
+              key="settings"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="max-w-md mx-auto bg-white p-10 rounded-3xl shadow-xl border border-slate-100"
+            >
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Key size={32} />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {isRtl ? 'إعدادات النظام' : 'System Settings'}
+                </h2>
+                <p className="text-slate-500 mt-2">
+                  {isRtl ? 'تغيير كلمة مرور لوحة التحكم' : 'Change dashboard password'}
+                </p>
+              </div>
+
+              <form onSubmit={handleUpdatePassword} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-bold text-slate-400 mb-2 uppercase">
+                    {isRtl ? 'كلمة المرور الجديدة' : 'New Password'}
+                  </label>
+                  <input 
+                    type="text" 
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={isRtl ? 'أدخل كلمة المرور الجديدة' : 'Enter new password'}
+                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 transition shadow-lg flex items-center justify-center gap-2"
+                >
+                  {isUpdatingPassword ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                  {isRtl ? 'حفظ التغييرات' : 'Save Changes'}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setView('dashboard')}
+                  className="w-full text-slate-500 font-bold hover:text-slate-700 transition"
+                >
+                  {isRtl ? 'رجوع' : 'Back'}
+                </button>
+              </form>
             </motion.div>
           )}
         </AnimatePresence>

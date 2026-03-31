@@ -1,20 +1,19 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Orthocure Patient Experience Survey
 
-# Run and deploy your AI Studio app
+Modern patient survey and dashboard system for Orthocure Medical Center.
 
-This contains everything you need to run your app locally.
+## How to Deploy to GitHub Pages
 
-View your app in AI Studio: https://ai.studio/apps/d79e8e8e-078c-4ba3-8bae-9076ab1a35d8
+1.  **Push the code to GitHub**: Use the "Publish to GitHub" feature in AI Studio.
+2.  **Enable GitHub Actions Deployment**:
+    *   Go to your repository on GitHub.
+    *   Click on **Settings** > **Pages**.
+    *   Under **Build and deployment** > **Source**, select **GitHub Actions**.
+3.  **Wait for the Action to complete**:
+    *   Go to the **Actions** tab in your repository.
+    *   You should see a workflow named "Deploy static content to Pages" running.
+    *   Once it finishes, your site will be live at `https://clinicorthocure-cyber.github.io/Patient-Experience-Survey/`.
 
-## Run Locally
+## Setup Google Sheets Integration
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+See [README_SETUP.md](./README_SETUP.md) for detailed instructions on connecting to Google Sheets and managing the dashboard password.

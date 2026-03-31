@@ -39,18 +39,14 @@ const RATING_LABELS: Record<Language, string[]> = {
   ar: [
     'غير راضٍ تماماً',
     'غير راضٍ',
-    'غير راضٍ قليلاً',
     'محايد',
-    'راضٍ قليلاً',
     'راضٍ',
     'راضٍ تماماً'
   ],
   en: [
     'Very Dissatisfied',
     'Dissatisfied',
-    'Somewhat Dissatisfied',
     'Neutral',
-    'Somewhat Satisfied',
     'Satisfied',
     'Very Satisfied'
   ]
@@ -294,9 +290,9 @@ export default function App() {
   const avgReception = calculateAvg('reception');
   const avgDoctorProf = calculateAvg('doctor_prof');
 
-  // Calculate satisfaction percentage (based on rating questions - now out of 7)
+  // Calculate satisfaction percentage (based on rating questions - now out of 5)
   const satisfactionRate = totalResponses > 0 
-    ? Math.round((parseFloat(avgCleanliness) + parseFloat(avgReception) + parseFloat(avgDoctorProf)) / 21 * 100)
+    ? Math.round((parseFloat(avgCleanliness) + parseFloat(avgReception) + parseFloat(avgDoctorProf)) / 15 * 100)
     : 0;
 
   const deptPerformance = Object.keys(SURVEY_QUESTIONS).map(d => {
@@ -537,22 +533,22 @@ export default function App() {
 
                   {questions[currentStep].type === 'rating' && (
                     <div className="space-y-10">
-                      <div className="grid grid-cols-7 gap-2 sm:gap-4">
-                        {[1, 2, 3, 4, 5, 6, 7].map((star) => (
+                      <div className="grid grid-cols-5 gap-2 sm:gap-4">
+                        {[1, 2, 3, 4, 5].map((star) => (
                           <button
                             key={star}
                             onClick={() => handleNext(star)}
                             className="flex-1 aspect-square rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center justify-center transition-all duration-300 group relative shadow-sm hover:shadow-md"
                           >
                             <Star 
-                              size={28} 
+                              size={32} 
                               className="text-slate-200 group-hover:text-yellow-400 group-hover:fill-yellow-400 transition-all duration-300" 
                             />
                             <span className="mt-2 text-xs font-black text-slate-400 group-hover:text-blue-900">{star}</span>
                           </button>
                         ))}
                       </div>
-                      <div className="grid grid-cols-7 gap-2">
+                      <div className="grid grid-cols-5 gap-2">
                         {RATING_LABELS.ar.map((labelAr, idx) => {
                           const labelEn = RATING_LABELS.en[idx];
                           return (
@@ -806,7 +802,7 @@ export default function App() {
                       {isRtl ? 'متوسط النظافة' : 'Avg Cleanliness'}
                     </p>
                   </div>
-                  <p className="text-4xl font-black text-slate-800 mt-2">{avgCleanliness}<span className="text-lg text-slate-300">/7</span></p>
+                  <p className="text-4xl font-black text-slate-800 mt-2">{avgCleanliness}<span className="text-lg text-slate-300">/5</span></p>
                 </div>
 
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
@@ -909,12 +905,12 @@ export default function App() {
                       <div key={item.label} className="space-y-3">
                         <div className="flex justify-between items-end">
                           <span className="font-bold text-slate-700">{item.label}</span>
-                          <span className="text-2xl font-black text-slate-900">{item.val}<span className="text-sm text-slate-300">/7</span></span>
+                          <span className="text-2xl font-black text-slate-900">{item.val}<span className="text-sm text-slate-300">/5</span></span>
                         </div>
                         <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: `${(parseFloat(item.val) / 7) * 100}%` }}
+                            animate={{ width: `${(parseFloat(item.val) / 5) * 100}%` }}
                             className={cn("h-full rounded-full", item.color)}
                           />
                         </div>

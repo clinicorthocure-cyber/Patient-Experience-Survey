@@ -58,7 +58,7 @@ const RATING_LABELS: Record<Language, string[]> = {
 
 export default function App() {
   const [view, setView] = useState<'landing' | 'survey' | 'final' | 'dashboard' | 'login' | 'settings'>('landing');
-  const [lang, setLang] = useState<Language>('ar');
+  const [lang, setLang] = useState<Language>('en');
   const [dept, setDept] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>({});
@@ -76,6 +76,47 @@ export default function App() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const isRtl = lang === 'ar';
+
+  const DualText = ({ ar, en, className, centered = false }: { ar: string, en: string, className?: string, centered?: boolean }) => {
+    const activeLang = lang;
+    return (
+      <div className={cn("flex flex-col gap-1", centered ? "items-center text-center" : (isRtl ? "items-start text-right" : "items-start text-left"), className)}>
+        <span className={cn(
+          "transition-all duration-300 leading-tight",
+          activeLang === 'ar' ? "text-slate-900 font-bold text-lg sm:text-xl opacity-100" : "text-slate-400 font-medium text-sm sm:text-base opacity-70 order-2"
+        )}>
+          {ar}
+        </span>
+        <span className={cn(
+          "transition-all duration-300 leading-tight",
+          activeLang === 'en' ? "text-slate-900 font-bold text-lg sm:text-xl opacity-100" : "text-slate-400 font-medium text-sm sm:text-base opacity-70 order-2"
+        )}>
+          {en}
+        </span>
+      </div>
+    );
+  };
+
+  const DualHeading = ({ ar, en, className }: { ar: string, en: string, className?: string }) => {
+    const activeLang = lang;
+    return (
+      <div className={cn("flex flex-col gap-2", className)}>
+        <h2 className={cn(
+          "transition-all duration-500 leading-tight tracking-tight",
+          activeLang === 'ar' ? "text-blue-900 font-black text-4xl sm:text-5xl opacity-100 scale-100" : "text-slate-300 font-bold text-2xl sm:text-3xl opacity-50 scale-95 order-2"
+        )}>
+          {ar}
+        </h2>
+        <h2 className={cn(
+          "transition-all duration-500 leading-tight tracking-tight",
+          activeLang === 'en' ? "text-blue-900 font-black text-4xl sm:text-5xl opacity-100 scale-100" : "text-slate-300 font-bold text-2xl sm:text-3xl opacity-50 scale-95 order-2"
+        )}>
+          {en}
+        </h2>
+      </div>
+    );
+  };
+
   const questions = dept ? SURVEY_QUESTIONS[dept] : [];
   const totalSteps = questions.length + 1; // +1 for the final form
   const progress = ((currentStep) / totalSteps) * 100;
@@ -279,22 +320,35 @@ export default function App() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white p-10 rounded-3xl shadow-xl max-w-md w-full text-center"
+          className="bg-white p-12 rounded-[3rem] shadow-2xl max-w-md w-full text-center border border-slate-100"
         >
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 size={48} />
+          <div className="w-24 h-24 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-10 shadow-inner">
+            <CheckCircle2 size={56} />
           </div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            {isRtl ? 'شكراً لك!' : 'Thank You!'}
-          </h2>
-          <p className="text-slate-600 mb-8 text-lg">
-            {isRtl ? 'تم تسجيل تقييمك بنجاح. نتمنى لك الشفاء العاجل.' : 'Your feedback has been recorded. We wish you a speedy recovery.'}
-          </p>
+          
+          <div className="mb-10">
+            <DualText 
+              ar="شكراً لك!" 
+              en="Thank You!" 
+              centered
+              className="text-3xl"
+            />
+          </div>
+
+          <div className="mb-12">
+            <DualText 
+              ar="تم تسجيل تقييمك بنجاح. نتمنى لك الشفاء العاجل." 
+              en="Your feedback has been recorded. We wish you a speedy recovery." 
+              centered
+              className="text-slate-500"
+            />
+          </div>
+
           <button 
             onClick={() => { setIsSubmitted(false); setView('landing'); }}
-            className="w-full bg-blue-700 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 transition shadow-lg"
+            className="w-full bg-blue-700 text-white py-5 rounded-3xl font-black text-lg hover:bg-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0"
           >
-            {isRtl ? 'العودة للرئيسية' : 'Back to Home'}
+            {lang === 'ar' ? 'العودة للرئيسية' : 'Back to Home'}
           </button>
         </motion.div>
       </div>
@@ -320,10 +374,13 @@ export default function App() {
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 hover:bg-slate-50 transition text-sm font-medium"
+            className="flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300 group"
           >
-            <Globe size={16} />
-            {lang === 'ar' ? 'English' : 'العربية'}
+            <Globe size={18} className="text-blue-600 group-hover:rotate-12 transition-transform" />
+            <div className="flex flex-col items-start leading-none">
+              <span className={cn("text-xs font-bold", lang === 'ar' ? "text-blue-700" : "text-slate-400")}>العربية</span>
+              <span className={cn("text-xs font-bold", lang === 'en' ? "text-blue-700" : "text-slate-400")}>English</span>
+            </div>
           </button>
           
           {view === 'landing' && (
@@ -364,31 +421,52 @@ export default function App() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="text-center"
+              className="text-center flex flex-col items-center"
             >
-              <h2 className="text-4xl sm:text-5xl font-black text-blue-900 mb-6 leading-tight">
-                {isRtl ? 'تقييم تجربة المريض' : 'Patient Experience Survey'}
-              </h2>
-              <p className="text-xl text-slate-500 mb-12 max-w-2xl mx-auto">
-                {isRtl ? 'رأيك يهمنا لنقدم لك أفضل خدمة طبية ممكنة.' : 'Your feedback helps us provide the best possible medical care.'}
-              </p>
+              <DualHeading 
+                ar="تقييم تجربة المريض" 
+                en="Patient Experience Survey" 
+                className="mb-8"
+              />
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div className="mb-14 max-w-2xl">
+                <DualText 
+                  ar="رأيك يهمنا لنقدم لك أفضل خدمة طبية ممكنة." 
+                  en="Your feedback helps us provide the best possible medical care." 
+                  centered
+                  className="text-slate-500"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full">
                 {Object.keys(SURVEY_QUESTIONS).map((name) => (
                   <button
                     key={name}
                     onClick={() => handleStartSurvey(name)}
-                    className="group bg-white p-8 rounded-3xl border-2 border-transparent hover:border-blue-500 shadow-sm hover:shadow-xl transition-all text-center flex flex-col items-center"
+                    className="group bg-white p-8 rounded-[2.5rem] border-2 border-transparent hover:border-blue-500 shadow-sm hover:shadow-2xl transition-all duration-500 text-center flex flex-col items-center relative overflow-hidden"
                   >
-                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                      <Star size={32} />
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-700" />
+                    
+                    <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner relative z-10">
+                      <Star size={40} />
                     </div>
-                    <span className="text-xl font-bold text-slate-800">
-                      {isRtl ? (name === 'Physiotherapy' ? 'علاج طبيعي' : name === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب') : name}
-                    </span>
-                    <div className="mt-4 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 font-bold">
-                      {isRtl ? 'ابدأ الآن' : 'Start Now'}
-                      {isRtl ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+                    
+                    <div className="relative z-10 mb-6">
+                      <DualText 
+                        ar={name === 'Physiotherapy' ? 'علاج طبيعي' : name === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب'} 
+                        en={name} 
+                        centered
+                      />
+                    </div>
+
+                    <div className="mt-auto text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center gap-0.5 relative z-10">
+                      <div className="flex items-center gap-1 font-black text-[10px] uppercase tracking-widest">
+                        <span>{lang === 'ar' ? 'ابدأ الآن' : 'Start Now'}</span>
+                        {lang === 'ar' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                      </div>
+                      <span className="text-[9px] font-bold opacity-40">
+                        {lang === 'ar' ? 'Start Now' : 'ابدأ الآن'}
+                      </span>
                     </div>
                   </button>
                 ))}
@@ -406,9 +484,12 @@ export default function App() {
             >
               {/* Progress Bar */}
               <div className="mb-12">
-                <div className="flex justify-between text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">
-                  <span>{isRtl ? 'التقدم' : 'Progress'}</span>
-                  <span>{Math.round(progress)}%</span>
+                <div className="flex justify-between mb-3">
+                  <div className="flex flex-col">
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", lang === 'ar' ? "text-slate-600" : "text-slate-300")}>التقدم</span>
+                    <span className={cn("text-[10px] font-black uppercase tracking-widest", lang === 'en' ? "text-slate-600" : "text-slate-300")}>Progress</span>
+                  </div>
+                  <span className="text-sm font-black text-blue-600">{Math.round(progress)}%</span>
                 </div>
                 <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
                   <motion.div 
@@ -421,51 +502,76 @@ export default function App() {
 
               {/* Question Card */}
               <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-xl border border-slate-100">
-                <span className="inline-block px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-bold mb-6">
-                  {isRtl ? 'سؤال' : 'Question'} {currentStep + 1} / {questions.length}
-                </span>
+                <div className="inline-flex flex-col bg-blue-50 px-5 py-2 rounded-2xl mb-8">
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", lang === 'ar' ? "text-blue-700" : "text-blue-300")}>
+                    سؤال {currentStep + 1} / {questions.length}
+                  </span>
+                  <span className={cn("text-[10px] font-black uppercase tracking-widest", lang === 'en' ? "text-blue-700" : "text-blue-300")}>
+                    Question {currentStep + 1} / {questions.length}
+                  </span>
+                </div>
                 
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-10 leading-snug">
-                  {questions[currentStep].text[lang]}
+                <h3 className="mb-10">
+                  <DualText 
+                    ar={questions[currentStep].text.ar} 
+                    en={questions[currentStep].text.en} 
+                  />
                 </h3>
 
                 <div className="space-y-4">
-                  {questions[currentStep].type === 'choice' && questions[currentStep].options?.[lang].map((opt) => (
-                    <button
-                      key={opt}
-                      onClick={() => handleNext(opt)}
-                      className="w-full p-5 text-start rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all flex justify-between items-center group"
-                    >
-                      <span className="text-lg font-bold text-slate-700 group-hover:text-blue-900">{opt}</span>
-                      <div className="w-6 h-6 rounded-full border-2 border-slate-200 group-hover:border-blue-500 flex items-center justify-center">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </button>
-                  ))}
+                  {questions[currentStep].type === 'choice' && questions[currentStep].options?.ar.map((optAr, idx) => {
+                    const optEn = questions[currentStep].options?.en[idx] || '';
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleNext(lang === 'ar' ? optAr : optEn)}
+                        className="w-full p-6 text-start rounded-3xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 flex justify-between items-center group shadow-sm hover:shadow-md"
+                      >
+                        <DualText ar={optAr} en={optEn} />
+                        <div className="w-8 h-8 rounded-full border-2 border-slate-200 group-hover:border-blue-500 flex items-center justify-center transition-colors">
+                          <div className="w-4 h-4 bg-blue-500 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 scale-50 group-hover:scale-100" />
+                        </div>
+                      </button>
+                    );
+                  })}
 
                   {questions[currentStep].type === 'rating' && (
-                    <div className="space-y-8">
+                    <div className="space-y-10">
                       <div className="grid grid-cols-7 gap-2 sm:gap-4">
                         {[1, 2, 3, 4, 5, 6, 7].map((star) => (
                           <button
                             key={star}
                             onClick={() => handleNext(star)}
-                            className="flex-1 aspect-square rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center justify-center transition-all group relative"
+                            className="flex-1 aspect-square rounded-2xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 flex flex-col items-center justify-center transition-all duration-300 group relative shadow-sm hover:shadow-md"
                           >
                             <Star 
-                              size={24} 
-                              className="text-slate-200 group-hover:text-yellow-400 group-hover:fill-yellow-400 transition-all" 
+                              size={28} 
+                              className="text-slate-200 group-hover:text-yellow-400 group-hover:fill-yellow-400 transition-all duration-300" 
                             />
-                            <span className="mt-1 text-[10px] sm:text-xs font-bold text-slate-400 group-hover:text-blue-900">{star}</span>
+                            <span className="mt-2 text-xs font-black text-slate-400 group-hover:text-blue-900">{star}</span>
                           </button>
                         ))}
                       </div>
-                      <div className="grid grid-cols-7 gap-1">
-                        {RATING_LABELS[lang].map((label, idx) => (
-                          <span key={idx} className="text-[8px] sm:text-[10px] text-center text-slate-400 font-medium leading-tight">
-                            {label}
-                          </span>
-                        ))}
+                      <div className="grid grid-cols-7 gap-2">
+                        {RATING_LABELS.ar.map((labelAr, idx) => {
+                          const labelEn = RATING_LABELS.en[idx];
+                          return (
+                            <div key={idx} className="flex flex-col items-center text-center gap-1">
+                              <span className={cn(
+                                "text-[9px] sm:text-[11px] font-bold leading-tight transition-all duration-300",
+                                lang === 'ar' ? "text-slate-600 opacity-100" : "text-slate-300 opacity-60 order-2"
+                              )}>
+                                {labelAr}
+                              </span>
+                              <span className={cn(
+                                "text-[9px] sm:text-[11px] font-bold leading-tight transition-all duration-300",
+                                lang === 'en' ? "text-slate-600 opacity-100" : "text-slate-300 opacity-60 order-2"
+                              )}>
+                                {labelEn}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
@@ -474,10 +580,13 @@ export default function App() {
                 <div className="mt-12 pt-8 border-t border-slate-100 flex justify-between items-center">
                   <button 
                     onClick={() => currentStep > 0 ? setCurrentStep(currentStep - 1) : setView('landing')}
-                    className="text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2 transition"
+                    className="text-slate-400 hover:text-blue-600 font-black text-sm uppercase tracking-widest flex items-center gap-2 transition-all duration-300"
                   >
                     {isRtl ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                    {isRtl ? 'السابق' : 'Previous'}
+                    <div className="flex flex-col items-start leading-none">
+                      <span className={cn(lang === 'ar' ? "text-blue-600" : "text-slate-300")}>السابق</span>
+                      <span className={cn(lang === 'en' ? "text-blue-600" : "text-slate-300")}>Previous</span>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -493,67 +602,82 @@ export default function App() {
               className="max-w-2xl mx-auto"
             >
               <div className="bg-white p-8 sm:p-12 rounded-[2.5rem] shadow-xl border border-slate-100">
-                <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-8 leading-snug">
-                  {isRtl ? 'هل تود إضافة أي ملاحظات أخرى؟' : 'Would you like to add any other feedback?'}
-                </h3>
+                <div className="mb-10">
+                  <DualText 
+                    ar="هل تود إضافة أي ملاحظات أخرى؟" 
+                    en="Would you like to add any other feedback?" 
+                  />
+                </div>
 
-                <div className="space-y-6">
+                <div className="space-y-8">
                   <div>
-                    <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                      {isRtl ? 'التعليق أو الرأي' : 'Comment or Opinion'}
-                    </label>
+                    <div className="mb-3">
+                      <DualText 
+                        ar="التعليق أو الرأي" 
+                        en="Comment or Opinion" 
+                        className="uppercase tracking-widest text-[10px] sm:text-xs font-black text-slate-400"
+                      />
+                    </div>
                     <textarea 
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
-                      placeholder={isRtl ? 'اكتب تعليقك هنا...' : 'Write your comment here...'}
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition h-32 resize-none"
+                      placeholder={lang === 'ar' ? 'اكتب تعليقك هنا...' : 'Write your comment here...'}
+                      className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 h-32 resize-none shadow-inner"
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                        {isRtl ? 'الاسم (اختياري)' : 'Name (Optional)'}
-                      </label>
+                      <div className="mb-3">
+                        <DualText 
+                          ar="الاسم (اختياري)" 
+                          en="Name (Optional)" 
+                          className="uppercase tracking-widest text-[10px] sm:text-xs font-black text-slate-400"
+                        />
+                      </div>
                       <input 
                         type="text"
                         value={userName}
                         onChange={(e) => setUserName(e.target.value)}
-                        placeholder={isRtl ? 'الاسم الكامل' : 'Full Name'}
-                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition"
+                        placeholder={lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}
+                        className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-inner"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-slate-400 mb-2 uppercase tracking-wider">
-                        {isRtl ? 'رقم الهاتف (اختياري)' : 'Phone (Optional)'}
-                      </label>
+                      <div className="mb-3">
+                        <DualText 
+                          ar="رقم الهاتف (اختياري)" 
+                          en="Phone (Optional)" 
+                          className="uppercase tracking-widest text-[10px] sm:text-xs font-black text-slate-400"
+                        />
+                      </div>
                       <input 
                         type="tel"
                         value={userPhone}
                         onChange={(e) => setUserPhone(e.target.value)}
-                        placeholder={isRtl ? 'رقم الجوال' : 'Phone Number'}
-                        className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 transition"
+                        placeholder={lang === 'ar' ? 'رقم الجوال' : 'Phone Number'}
+                        className="w-full p-5 bg-slate-50 border border-slate-200 rounded-3xl outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-inner"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="mt-12 pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6">
                   <button 
                     onClick={() => { setView('survey'); setCurrentStep(questions.length - 1); }}
-                    className="text-slate-400 hover:text-slate-600 font-bold flex items-center gap-2 transition order-2 sm:order-1"
+                    className="text-slate-400 hover:text-blue-600 font-black text-sm uppercase tracking-widest flex items-center gap-2 transition-all duration-300 order-2 sm:order-1"
                   >
                     {isRtl ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                    {isRtl ? 'السابق' : 'Previous'}
+                    <span>{lang === 'ar' ? 'السابق' : 'Previous'}</span>
                   </button>
 
                   <button 
                     onClick={submitSurvey}
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-blue-800 transition shadow-lg flex items-center justify-center gap-2 order-1 sm:order-2"
+                    className="w-full sm:w-auto bg-blue-700 text-white px-12 py-5 rounded-3xl font-black text-lg hover:bg-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl flex items-center justify-center gap-3 order-1 sm:order-2 transform hover:-translate-y-1 active:translate-y-0"
                   >
-                    {isSubmitting ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                    {isRtl ? 'إرسال التقييم' : 'Submit Survey'}
+                    {isSubmitting ? <Loader2 className="animate-spin" size={24} /> : <Save size={24} />}
+                    <span>{lang === 'ar' ? 'إرسال التقييم' : 'Submit Survey'}</span>
                   </button>
                 </div>
               </div>

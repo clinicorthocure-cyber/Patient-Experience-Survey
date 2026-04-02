@@ -41,5 +41,15 @@ export const SURVEY_QUESTIONS: Record<string, Question[]> = {
     { id: 'diagnosis_clarity', type: 'rating', text: { ar: 'ما مدى وضوح شرح الأخصائي لخطة العلاج والتمارين؟', en: 'How clearly did the physiotherapist explain your treatment plan and exercises?' } },
     { id: 'overall_exp', type: 'rating', text: { ar: 'كيف تقيم تجربتك العامة للعلاج الطبيعي؟', en: 'How would you rate your overall physiotherapy experience?' } },
     { id: 'recommend', type: 'rating', text: { ar: 'ما مدى احتمالية توصيتك بمركز أورثوكيور الطبي لعائلتك أو أصدقائك؟', en: 'How likely are you to recommend Orthocure Medical Center to family or friends?' } }
+  ],
+  'Kinesiology & Rehabilitation': [
+    { id: 'scheduling', type: 'rating', text: { ar: 'كيف تقيم عملية حجز الموعد؟', en: 'How would you rate the appointment scheduling process?' } },
+    { id: 'reception', type: 'rating', text: { ar: 'كيف تقيم لباقة واحترافية فريق الاستقبال؟', en: 'How would you rate the courtesy and professionalism of our reception team?' } },
+    { id: 'cleanliness', type: 'rating', text: { ar: 'كيف تقيم نظافة والراحة العامة للعيادة؟', en: 'How would you rate the cleanliness and overall comfort of the clinic?' } },
+    { id: 'waiting', type: 'rating', text: { ar: 'ما مدى رضاك عن وقت الانتظار قبل جلستك؟', en: 'How satisfied were you with the waiting time prior to your session?' } },
+    { id: 'doctor_prof', type: 'rating', text: { ar: 'كيف تقيم احترافية وسلوك المدرب؟', en: 'How would you rate the Instructor’s professionalism and conduct?' } },
+    { id: 'diagnosis_clarity', type: 'rating', text: { ar: 'ما مدى وضوح شرح المدرب للتمارين؟', en: 'How clearly did the Instructor explain your exercises?' } },
+    { id: 'overall_exp', type: 'rating', text: { ar: 'كيف تقيم تجربتك العامة مع المدرب؟', en: 'How would you rate your overall Instructor experience?' } },
+    { id: 'recommend', type: 'rating', text: { ar: 'ما مدى احتمالية توصيتك بمركز أورثوكيور الطبي لعائلتك أو أصدقائك؟', en: 'How likely are you to recommend Orthocure Medical Center to family or friends?' } }
   ]
 };

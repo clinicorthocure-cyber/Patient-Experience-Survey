@@ -307,7 +307,12 @@ export default function App() {
       return acc + (c + r + p) / 3;
     }, 0);
     return { 
-      name: isRtl ? (d === 'Physiotherapy' ? 'علاج طبيعي' : d === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب') : d, 
+      name: isRtl ? (
+        d === 'Physiotherapy' ? 'علاج طبيعي' : 
+        d === 'MRI Scan' ? 'أشعة رنين' : 
+        d === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
+        'كشف طبيب'
+      ) : d, 
       score: parseFloat((sum / deptData.length).toFixed(1)) 
     };
   });
@@ -436,7 +441,7 @@ export default function App() {
                 />
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                 {Object.keys(SURVEY_QUESTIONS).map((name) => (
                   <button
                     key={name}
@@ -451,7 +456,12 @@ export default function App() {
                     
                     <div className="relative z-10 mb-6">
                       <DualText 
-                        ar={name === 'Physiotherapy' ? 'علاج طبيعي' : name === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب'} 
+                        ar={
+                          name === 'Physiotherapy' ? 'علاج طبيعي' : 
+                          name === 'MRI Scan' ? 'أشعة رنين' : 
+                          name === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
+                          'كشف طبيب'
+                        } 
                         en={name} 
                         centered
                       />
@@ -886,7 +896,12 @@ export default function App() {
                       <div key={entry.name} className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                         <span className="text-xs font-bold text-slate-500">
-                          {isRtl ? (entry.name === 'Physiotherapy' ? 'علاج طبيعي' : entry.name === 'MRI Scan' ? 'أشعة رنين' : 'كشف طبيب') : entry.name}
+                          {isRtl ? (
+                            entry.name === 'Physiotherapy' ? 'علاج طبيعي' : 
+                            entry.name === 'MRI Scan' ? 'أشعة رنين' : 
+                            entry.name === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
+                            'كشف طبيب'
+                          ) : entry.name}
                         </span>
                       </div>
                     ))}

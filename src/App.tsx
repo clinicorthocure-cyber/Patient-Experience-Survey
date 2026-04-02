@@ -455,10 +455,26 @@ export default function App() {
               {!branch ? (
                 <>
                   <DualHeading 
-                    ar="اختر الفرع" 
-                    en="Select Branch" 
+                    ar="استبيان رضا المرضى" 
+                    en="Patient Satisfaction Survey" 
                     className="mb-8"
                   />
+                  <div className="mb-14 max-w-2xl">
+                    <DualText 
+                      ar="نشكرك على اختيار مركز أورثوكيور الطبي. ملاحظاتك تمكننا من التحسين المستمر وتقديم أعلى معايير الرعاية الطبية." 
+                      en="Thank you for choosing Orthocure Medical Center. Your feedback enables us to continuously enhance and deliver the highest standard of medical care." 
+                      centered
+                      className="text-slate-500"
+                    />
+                  </div>
+                  <div className="mb-8">
+                    <DualText 
+                      ar="اختر الفرع" 
+                      en="Select Branch" 
+                      centered
+                      className="text-blue-600 font-black uppercase tracking-widest text-sm"
+                    />
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full max-w-2xl">
                     {BRANCHES.map((b) => (
                       <button
@@ -489,13 +505,13 @@ export default function App() {
                       <ChevronLeft size={20} />
                     </button>
                     <DualHeading 
-                      ar="تقييم تجربة المريض" 
-                      en="Patient Experience Survey" 
+                      ar="استبيان رضا المرضى" 
+                      en="Patient Satisfaction Survey" 
                     />
                   </div>
                   
                   <div className="mb-10">
-                    <div className="inline-block px-6 py-2 bg-blue-50 rounded-full border border-blue-100 mb-4">
+                    <div className="inline-block px-6 py-2 bg-blue-50 rounded-full border border-blue-100 mb-6">
                       <DualText 
                         ar={branch === 'Orthocure Jumeirah Branch' ? 'فرع جميرا' : 'فرع مردف'} 
                         en={branch} 
@@ -504,8 +520,8 @@ export default function App() {
                       />
                     </div>
                     <DualText 
-                      ar="رأيك يهمنا لنقدم لك أفضل خدمة طبية ممكنة." 
-                      en="Your feedback helps us provide the best possible medical care." 
+                      ar="نشكرك على اختيار مركز أورثوكيور الطبي. ملاحظاتك تمكننا من التحسين المستمر وتقديم أعلى معايير الرعاية الطبية." 
+                      en="Thank you for choosing Orthocure Medical Center. Your feedback enables us to continuously enhance and deliver the highest standard of medical care." 
                       centered
                       className="text-slate-500"
                     />

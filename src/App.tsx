@@ -30,10 +30,12 @@ import {
   Cell 
 } from 'recharts';
 import { cn } from './lib/utils';
-import { SURVEY_QUESTIONS, Language, Question, SurveyResponse } from './types';
+import { SURVEY_QUESTIONS, Language, Question, SurveyResponse, Branch } from './types';
 
 const COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 const LOGO_URL = "https://imgur.com/TOW5WAS.jpeg";
+
+const BRANCHES: Branch[] = ['Orthocure Jumeirah Branch', 'Orthocure Mirdif Branch'];
 
 const RATING_LABELS: Record<Language, string[]> = {
   ar: [
@@ -55,6 +57,7 @@ const RATING_LABELS: Record<Language, string[]> = {
 export default function App() {
   const [view, setView] = useState<'landing' | 'survey' | 'final' | 'dashboard' | 'login' | 'settings'>('landing');
   const [lang, setLang] = useState<Language>('en');
+  const [branch, setBranch] = useState<Branch | ''>('');
   const [dept, setDept] = useState<string>('');
   const [currentStep, setCurrentStep] = useState(0);
   const [responses, setResponses] = useState<Record<string, any>>({});
@@ -70,6 +73,10 @@ export default function App() {
   const [loginError, setLoginError] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Dashboard Filters
+  const [filterBranch, setFilterBranch] = useState<string>('All');
+  const [filterDept, setFilterDept] = useState<string>('All');
 
   const isRtl = lang === 'ar';
 
@@ -146,6 +153,18 @@ export default function App() {
     setUserPhone('');
   };
 
+  const handleReset = () => {
+    setView('landing');
+    setBranch('');
+    setDept('');
+    setCurrentStep(0);
+    setResponses({});
+    setComment('');
+    setUserName('');
+    setUserPhone('');
+    setIsSubmitted(false);
+  };
+
   const handleNext = (value: any) => {
     const currentQuestion = questions[currentStep];
     const newResponses = { ...responses, [currentQuestion.id]: value };
@@ -165,6 +184,7 @@ export default function App() {
     // Explicitly ordered payload to match Sheet columns
     const payload = {
       timestamp: new Date().toLocaleString('en-US', { timeZone: 'UTC' }),
+      branch: branch,
       department: dept,
       language: lang,
       scheduling: responses.scheduling || 0,
@@ -261,16 +281,22 @@ export default function App() {
   };
 
   // Dashboard Stats Calculations
-  const totalResponses = dashboardData.length;
+  const filteredData = dashboardData.filter(item => {
+    const branchMatch = filterBranch === 'All' || item.branch === filterBranch;
+    const deptMatch = filterDept === 'All' || item.department === filterDept;
+    return branchMatch && deptMatch;
+  });
+
+  const totalResponses = filteredData.length;
   
-  const deptStats = dashboardData.reduce((acc: any, curr) => {
+  const deptStats = filteredData.reduce((acc: any, curr) => {
     acc[curr.department] = (acc[curr.department] || 0) + 1;
     return acc;
   }, {});
   
   const pieData = Object.entries(deptStats).map(([name, value]) => ({ name, value }));
 
-  const langStats = dashboardData.reduce((acc: any, curr) => {
+  const langStats = filteredData.reduce((acc: any, curr) => {
     acc[curr.language] = (acc[curr.language] || 0) + 1;
     return acc;
   }, {});
@@ -281,7 +307,7 @@ export default function App() {
 
   const calculateAvg = (key: string) => {
     if (totalResponses === 0) return "0.0";
-    const sum = dashboardData.reduce((acc, curr: any) => {
+    const sum = filteredData.reduce((acc, curr: any) => {
       const val = parseInt(curr[key]);
       return acc + (isNaN(val) ? 0 : val);
     }, 0);
@@ -298,7 +324,7 @@ export default function App() {
     : 0;
 
   const deptPerformance = Object.keys(SURVEY_QUESTIONS).map(d => {
-    const deptData = dashboardData.filter(item => item.department === d);
+    const deptData = filteredData.filter(item => item.department === d);
     if (deptData.length === 0) return { name: d, score: 0 };
     const sum = deptData.reduce((acc, curr: any) => {
       const c = parseInt(curr.cleanliness) || 0;
@@ -426,59 +452,108 @@ export default function App() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center flex flex-col items-center"
             >
-              <DualHeading 
-                ar="تقييم تجربة المريض" 
-                en="Patient Experience Survey" 
-                className="mb-8"
-              />
-              
-              <div className="mb-14 max-w-2xl">
-                <DualText 
-                  ar="رأيك يهمنا لنقدم لك أفضل خدمة طبية ممكنة." 
-                  en="Your feedback helps us provide the best possible medical care." 
-                  centered
-                  className="text-slate-500"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-                {Object.keys(SURVEY_QUESTIONS).map((name) => (
-                  <button
-                    key={name}
-                    onClick={() => handleStartSurvey(name)}
-                    className="group bg-white p-8 rounded-[2.5rem] border-2 border-transparent hover:border-blue-500 shadow-sm hover:shadow-2xl transition-all duration-500 text-center flex flex-col items-center relative overflow-hidden"
-                  >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-700" />
-                    
-                    <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner relative z-10">
-                      <Star size={40} />
-                    </div>
-                    
-                    <div className="relative z-10 mb-6">
+              {!branch ? (
+                <>
+                  <DualHeading 
+                    ar="اختر الفرع" 
+                    en="Select Branch" 
+                    className="mb-8"
+                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 w-full max-w-2xl">
+                    {BRANCHES.map((b) => (
+                      <button
+                        key={b}
+                        onClick={() => setBranch(b)}
+                        className="group bg-white p-10 rounded-[2.5rem] border-2 border-transparent hover:border-blue-500 shadow-sm hover:shadow-2xl transition-all duration-500 text-center flex flex-col items-center relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-700" />
+                        <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner relative z-10">
+                          <ClipboardList size={40} />
+                        </div>
+                        <DualText 
+                          ar={b === 'Orthocure Jumeirah Branch' ? 'فرع جميرا' : 'فرع مردف'} 
+                          en={b} 
+                          centered
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center gap-4 mb-8">
+                    <button 
+                      onClick={() => setBranch('')}
+                      className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <DualHeading 
+                      ar="تقييم تجربة المريض" 
+                      en="Patient Experience Survey" 
+                    />
+                  </div>
+                  
+                  <div className="mb-10">
+                    <div className="inline-block px-6 py-2 bg-blue-50 rounded-full border border-blue-100 mb-4">
                       <DualText 
-                        ar={
-                          name === 'Physiotherapy' ? 'علاج طبيعي' : 
-                          name === 'MRI Scan' ? 'أشعة رنين' : 
-                          name === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
-                          'كشف طبيب'
-                        } 
-                        en={name} 
+                        ar={branch === 'Orthocure Jumeirah Branch' ? 'فرع جميرا' : 'فرع مردف'} 
+                        en={branch} 
                         centered
+                        className="text-blue-700"
                       />
                     </div>
+                    <DualText 
+                      ar="رأيك يهمنا لنقدم لك أفضل خدمة طبية ممكنة." 
+                      en="Your feedback helps us provide the best possible medical care." 
+                      centered
+                      className="text-slate-500"
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+                    {Object.keys(SURVEY_QUESTIONS)
+                      .filter(name => {
+                        if (branch === 'Orthocure Jumeirah Branch' && name === 'MRI Scan') return false;
+                        if (branch === 'Orthocure Mirdif Branch' && name === 'Kinesiology & Rehabilitation') return false;
+                        return true;
+                      })
+                      .map((name) => (
+                        <button
+                          key={name}
+                          onClick={() => handleStartSurvey(name)}
+                          className="group bg-white p-8 rounded-[2.5rem] border-2 border-transparent hover:border-blue-500 shadow-sm hover:shadow-2xl transition-all duration-500 text-center flex flex-col items-center relative overflow-hidden"
+                        >
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50 group-hover:scale-150 transition-transform duration-700" />
+                          
+                          <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 shadow-inner relative z-10">
+                            <Star size={40} />
+                          </div>
+                          
+                          <div className="relative z-10 mb-6">
+                            <DualText 
+                              ar={
+                                name === 'Physiotherapy' ? 'علاج طبيعي' : 
+                                name === 'MRI Scan' ? 'أشعة رنين' : 
+                                name === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
+                                'كشف طبيب'
+                              } 
+                              en={name} 
+                              centered
+                            />
+                          </div>
 
-                    <div className="mt-auto text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center gap-0.5 relative z-10">
-                      <div className="flex items-center gap-1 font-black text-[10px] uppercase tracking-widest">
-                        <span>{lang === 'ar' ? 'ابدأ الآن' : 'Start Now'}</span>
-                        {lang === 'ar' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-                      </div>
-                      <span className="text-[9px] font-bold opacity-40">
-                        {lang === 'ar' ? 'Start Now' : 'ابدأ الآن'}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+                          <div className="mt-auto text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center gap-0.5 relative z-10">
+                            <div className="flex items-center gap-1 font-black text-[10px] uppercase tracking-widest">
+                              <span>{lang === 'ar' ? 'ابدأ الآن' : 'Start Now'}</span>
+                              {lang === 'ar' ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                            </div>
+                          </div>
+                        </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -764,7 +839,27 @@ export default function App() {
                     {isRtl ? 'مؤشرات الأداء الفورية والتحليلات المتقدمة' : 'Real-time performance indicators & advanced analytics'}
                   </p>
                 </div>
-                <div className="flex gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                  <select 
+                    value={filterBranch}
+                    onChange={(e) => setFilterBranch(e.target.value)}
+                    className="px-4 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="All">{isRtl ? 'جميع الفروع' : 'All Branches'}</option>
+                    {BRANCHES.map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                  <select 
+                    value={filterDept}
+                    onChange={(e) => setFilterDept(e.target.value)}
+                    className="px-4 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="All">{isRtl ? 'جميع الأقسام' : 'All Departments'}</option>
+                    {Object.keys(SURVEY_QUESTIONS).map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
                   <button 
                     onClick={fetchDashboardData}
                     disabled={isLoadingDashboard}

@@ -1,4 +1,5 @@
 export type Language = 'ar' | 'en';
+export type Branch = 'Orthocure Jumeirah Branch' | 'Orthocure Mirdif Branch';
 
 export interface Question {
   id: string;
@@ -9,6 +10,7 @@ export interface Question {
 
 export interface SurveyResponse {
   timestamp: string;
+  branch: Branch;
   department: string;
   language: Language;
   [key: string]: string | number;

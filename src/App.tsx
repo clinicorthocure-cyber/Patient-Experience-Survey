@@ -173,6 +173,8 @@ export default function App() {
       cleanliness: responses.cleanliness || 0,
       doctor_prof: responses.doctor_prof || 0,
       diagnosis_clarity: responses.diagnosis_clarity || 0,
+      overall_exp: responses.overall_exp || 0,
+      recommend: responses.recommend || 0,
       comment: comment || '',
       userName: userName || '',
       userPhone: userPhone || ''

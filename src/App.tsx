@@ -73,6 +73,7 @@ export default function App() {
   const [loginError, setLoginError] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
 
   // Dashboard Filters
   const [filterBranch, setFilterBranch] = useState<string>('All');
@@ -144,6 +145,16 @@ export default function App() {
   };
 
   const handleStartSurvey = (selectedDept: string) => {
+    // Check submission limit (5 per week)
+    const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recentSubmissions = submissions.filter((ts: number) => ts > oneWeekAgo);
+    
+    if (recentSubmissions.length >= 5) {
+      setLimitReached(true);
+      return;
+    }
+
     setDept(selectedDept);
     setView('survey');
     setCurrentStep(0);
@@ -216,6 +227,12 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
+      // Update local submission history
+      const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
+      submissions.push(Date.now());
+      localStorage.setItem('survey_submissions', JSON.stringify(submissions));
+
       setIsSubmitting(false);
       setIsSubmitted(true);
     } catch (error) {
@@ -444,6 +461,35 @@ export default function App() {
 
       <main className="max-w-4xl mx-auto p-6 pt-12">
         <AnimatePresence mode="wait">
+          {limitReached && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm"
+            >
+              <div className="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center border border-slate-100">
+                <div className="w-20 h-20 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <AlertCircle size={40} />
+                </div>
+                <DualHeading ar="شكراً لمشاركتك" en="Thank You" className="mb-6" />
+                <div className="mb-10">
+                  <DualText 
+                    ar="لقد قمت بإجراء التقييم بالفعل أكثر من مرة، شكراً لمشاركتك الفعالة، يمكنك التقييم مرة أخرى لاحقاً." 
+                    en="You have already participated in the survey multiple times. Thank you for your active participation, you can participate again later." 
+                    centered
+                    className="text-slate-500"
+                  />
+                </div>
+                <button 
+                  onClick={() => setLimitReached(false)}
+                  className="w-full bg-blue-700 text-white py-5 rounded-3xl font-black text-lg hover:bg-blue-800 transition-all duration-300 shadow-xl hover:shadow-2xl"
+                >
+                  <DualText ar="حسناً" en="Got it" centered className="text-white" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
           {view === 'landing' && (
             <motion.div 
               key="landing"

@@ -125,13 +125,16 @@ export default function App() {
   const totalSteps = questions.length + 1; // +1 for the final form
   const progress = ((currentStep) / totalSteps) * 100;
 
+  const scriptUrl = (import.meta as any).env.VITE_GOOGLE_SCRIPT_URL;
+
   useEffect(() => {
     fetchConfig();
   }, []);
 
   const fetchConfig = async () => {
+    if (!scriptUrl) return;
     try {
-      const response = await fetch('/api/config');
+      const response = await fetch(`${scriptUrl}?type=config`);
       const config = await response.json();
       if (config.password) {
         setRemotePassword(config.password);
@@ -208,14 +211,22 @@ export default function App() {
       userPhone: userPhone || ''
     };
     
+    if (!scriptUrl) {
+      console.warn('Google Script URL not configured.');
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setIsSubmitted(true);
+      }, 1500);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/submit', {
+      await fetch(scriptUrl, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) throw new Error('Submission failed');
 
       // Update local submission history
       const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
@@ -233,12 +244,15 @@ export default function App() {
 
   const fetchDashboardData = async () => {
     setIsLoadingDashboard(true);
-    console.log('Fetching dashboard data from SQLite...');
+    if (!scriptUrl) {
+      setDashboardData([]);
+      setIsLoadingDashboard(false);
+      return;
+    }
+
     try {
-      const response = await fetch('/api/dashboard');
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(scriptUrl);
       const data = await response.json();
-      console.log('Dashboard data received:', data);
       setDashboardData(data);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -249,15 +263,12 @@ export default function App() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Attempting login...');
     const correctPassword = remotePassword || (import.meta as any).env.VITE_DASHBOARD_PASSWORD || 'admin';
     if (password === correctPassword) {
-      console.log('Login successful, fetching dashboard data...');
       setView('dashboard');
       fetchDashboardData();
       setLoginError(false);
     } else {
-      console.log('Login failed: incorrect password');
       setLoginError(true);
     }
   };
@@ -268,14 +279,12 @@ export default function App() {
     setIsUpdatingPassword(true);
     
     try {
-      const response = await fetch('/api/updatePassword', {
+      // Using query parameters for better compatibility with GAS no-cors POST
+      await fetch(`${scriptUrl}?type=updatePassword&newPassword=${encodeURIComponent(newPassword)}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword })
+        mode: 'no-cors'
       });
       
-      if (!response.ok) throw new Error('Update failed');
-
       setRemotePassword(newPassword);
       setNewPassword('');
       alert(isRtl ? 'تم تحديث كلمة المرور بنجاح' : 'Password updated successfully');
@@ -920,40 +929,6 @@ export default function App() {
                   >
                     {isLoadingDashboard ? <Loader2 className="animate-spin" size={18} /> : <BarChart3 size={18} />}
                     {isRtl ? 'تحديث' : 'Refresh'}
-                  </button>
-                  <button 
-                    onClick={async () => {
-                      if (confirm('Add 10 test responses?')) {
-                        for (let i = 0; i < 10; i++) {
-                          const testPayload = {
-                            timestamp: new Date().toLocaleString('en-US', { timeZone: 'UTC' }),
-                            branch: BRANCHES[Math.floor(Math.random() * BRANCHES.length)],
-                            department: Object.keys(SURVEY_QUESTIONS)[Math.floor(Math.random() * Object.keys(SURVEY_QUESTIONS).length)],
-                            language: Math.random() > 0.5 ? 'en' : 'ar',
-                            scheduling: Math.floor(Math.random() * 5) + 1,
-                            reception: Math.floor(Math.random() * 5) + 1,
-                            waiting: Math.floor(Math.random() * 5) + 1,
-                            cleanliness: Math.floor(Math.random() * 5) + 1,
-                            doctor_prof: Math.floor(Math.random() * 5) + 1,
-                            diagnosis_clarity: Math.floor(Math.random() * 5) + 1,
-                            overall_exp: Math.floor(Math.random() * 5) + 1,
-                            recommend: Math.floor(Math.random() * 5) + 1,
-                            comment: 'Test comment ' + i,
-                            userName: 'Test User ' + i,
-                            userPhone: '123456789'
-                          };
-                          await fetch('/api/submit', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(testPayload),
-                          });
-                        }
-                        fetchDashboardData();
-                      }
-                    }}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition shadow-sm"
-                  >
-                    {isRtl ? 'بيانات تجريبية' : 'Seed Data'}
                   </button>
                 </div>
               </div>

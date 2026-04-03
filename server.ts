@@ -55,35 +55,43 @@ async function startServer() {
 
   // API Routes
   app.get("/api/config", async (req, res) => {
+    console.log('GET /api/config');
     try {
       const row = await db.get("SELECT value FROM config WHERE key = 'password'");
       res.json({ password: row ? row.value : "admin" });
     } catch (error) {
+      console.error('Config fetch error:', error);
       res.status(500).json({ error: "Failed to fetch config" });
     }
   });
 
   app.post("/api/updatePassword", async (req, res) => {
+    console.log('POST /api/updatePassword');
     const { newPassword } = req.body;
     if (!newPassword) return res.status(400).json({ error: "Password required" });
     try {
       await db.run("UPDATE config SET value = ? WHERE key = 'password'", newPassword);
       res.json({ result: "success" });
     } catch (error) {
+      console.error('Password update error:', error);
       res.status(500).json({ error: "Failed to update password" });
     }
   });
 
   app.get("/api/dashboard", async (req, res) => {
+    console.log('GET /api/dashboard');
     try {
       const rows = await db.all("SELECT * FROM responses ORDER BY id DESC");
+      console.log(`Returning ${rows.length} responses`);
       res.json(rows);
     } catch (error) {
+      console.error('Dashboard fetch error:', error);
       res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
   });
 
   app.post("/api/submit", async (req, res) => {
+    console.log('POST /api/submit');
     const data = req.body;
     try {
       await db.run(`
@@ -99,6 +107,7 @@ async function startServer() {
         data.doctor_prof, data.diagnosis_clarity, data.overall_exp,
         data.recommend, data.comment, data.userName, data.userPhone
       ]);
+      console.log('Submission saved to SQLite');
       res.json({ result: "success" });
     } catch (error) {
       console.error("Submission error:", error);

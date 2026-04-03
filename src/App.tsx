@@ -125,16 +125,13 @@ export default function App() {
   const totalSteps = questions.length + 1; // +1 for the final form
   const progress = ((currentStep) / totalSteps) * 100;
 
-  const scriptUrl = (import.meta as any).env.VITE_GOOGLE_SCRIPT_URL;
-
   useEffect(() => {
     fetchConfig();
   }, []);
 
   const fetchConfig = async () => {
-    if (!scriptUrl) return;
     try {
-      const response = await fetch(`${scriptUrl}?type=config`);
+      const response = await fetch('/api/config');
       const config = await response.json();
       if (config.password) {
         setRemotePassword(config.password);
@@ -211,22 +208,14 @@ export default function App() {
       userPhone: userPhone || ''
     };
     
-    if (!scriptUrl) {
-      console.warn('Google Script URL not configured.');
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setIsSubmitted(true);
-      }, 1500);
-      return;
-    }
-
     try {
-      await fetch(scriptUrl, {
+      const response = await fetch('/api/submit', {
         method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
+      if (!response.ok) throw new Error('Submission failed');
 
       // Update local submission history
       const submissions = JSON.parse(localStorage.getItem('survey_submissions') || '[]');
@@ -244,14 +233,8 @@ export default function App() {
 
   const fetchDashboardData = async () => {
     setIsLoadingDashboard(true);
-    if (!scriptUrl) {
-      setDashboardData([]);
-      setIsLoadingDashboard(false);
-      return;
-    }
-
     try {
-      const response = await fetch(scriptUrl);
+      const response = await fetch('/api/dashboard');
       const data = await response.json();
       setDashboardData(data);
     } catch (error) {
@@ -279,12 +262,14 @@ export default function App() {
     setIsUpdatingPassword(true);
     
     try {
-      // Using query parameters for better compatibility with GAS no-cors POST
-      await fetch(`${scriptUrl}?type=updatePassword&newPassword=${encodeURIComponent(newPassword)}`, {
+      const response = await fetch('/api/updatePassword', {
         method: 'POST',
-        mode: 'no-cors'
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword })
       });
       
+      if (!response.ok) throw new Error('Update failed');
+
       setRemotePassword(newPassword);
       setNewPassword('');
       alert(isRtl ? 'تم تحديث كلمة المرور بنجاح' : 'Password updated successfully');

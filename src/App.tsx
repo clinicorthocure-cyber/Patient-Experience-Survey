@@ -78,6 +78,8 @@ export default function App() {
   // Dashboard Filters
   const [filterBranch, setFilterBranch] = useState<string>('All');
   const [filterDept, setFilterDept] = useState<string>('All');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   const isRtl = lang === 'ar';
 
@@ -297,11 +299,49 @@ export default function App() {
     }
   };
 
+  const printSection = (id: string) => {
+    const printContent = document.getElementById(id);
+    if (!printContent) return;
+
+    const originalContent = document.body.innerHTML;
+    const printWindow = window.open('', '', 'height=600,width=800');
+    if (!printWindow) return;
+
+    printWindow.document.write('<html><head><title>Print</title>');
+    printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">');
+    printWindow.document.write('<style>body { font-family: sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; } .no-print { display: none; }</style>');
+    printWindow.document.write('</head><body dir="' + (isRtl ? 'rtl' : 'ltr') + '">');
+    printWindow.document.write(printContent.innerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
+  };
+
   // Dashboard Stats Calculations
   const filteredData = dashboardData.filter(item => {
     const branchMatch = filterBranch === 'All' || item.branch === filterBranch;
     const deptMatch = filterDept === 'All' || item.department === filterDept;
-    return branchMatch && deptMatch;
+    
+    let dateMatch = true;
+    if (item.timestamp) {
+      const itemDate = new Date(item.timestamp);
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        if (itemDate < start) dateMatch = false;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        if (itemDate > end) dateMatch = false;
+      }
+    }
+
+    return branchMatch && deptMatch && dateMatch;
   });
 
   const totalResponses = filteredData.length;
@@ -902,6 +942,24 @@ export default function App() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase">{isRtl ? 'من' : 'From'}</span>
+                    <input 
+                      type="date" 
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-transparent outline-none text-slate-600 font-bold"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase">{isRtl ? 'إلى' : 'To'}</span>
+                    <input 
+                      type="date" 
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="bg-transparent outline-none text-slate-600 font-bold"
+                    />
+                  </div>
                   <select 
                     value={filterBranch}
                     onChange={(e) => setFilterBranch(e.target.value)}
@@ -930,8 +988,17 @@ export default function App() {
                     {isLoadingDashboard ? <Loader2 className="animate-spin" size={18} /> : <BarChart3 size={18} />}
                     {isRtl ? 'تحديث' : 'Refresh'}
                   </button>
+                  <button 
+                    onClick={() => printSection('dashboard-stats')}
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-2xl font-bold hover:bg-slate-900 transition shadow-lg"
+                  >
+                    <BarChart3 size={18} />
+                    {isRtl ? 'طباعة المؤشرات' : 'Print Stats'}
+                  </button>
                 </div>
               </div>
+
+              <div id="dashboard-stats" className="space-y-8">
 
               {/* Main Stats Bento Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1091,6 +1158,81 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Responses Table Section */}
+              <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mt-12">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                  <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <ClipboardList size={20} className="text-blue-600" />
+                    {isRtl ? 'جدول التقييمات التفصيلي' : 'Detailed Survey Responses'}
+                  </h3>
+                  <button 
+                    onClick={() => printSection('responses-table')}
+                    className="flex items-center gap-2 px-6 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition"
+                  >
+                    <ClipboardList size={18} />
+                    {isRtl ? 'طباعة الجدول' : 'Print Table'}
+                  </button>
+                </div>
+
+                <div id="responses-table" className="overflow-x-auto">
+                  <table className="w-full text-sm text-left rtl:text-right text-slate-500">
+                    <thead className="text-xs text-slate-700 uppercase bg-slate-50 rounded-xl">
+                      <tr>
+                        <th className="px-6 py-4 font-black">{isRtl ? 'التاريخ والوقت' : 'Date & Time'}</th>
+                        <th className="px-6 py-4 font-black">{isRtl ? 'الفرع' : 'Branch'}</th>
+                        <th className="px-6 py-4 font-black">{isRtl ? 'القسم' : 'Dept'}</th>
+                        <th className="px-6 py-4 font-black">{isRtl ? 'الاسم' : 'Name'}</th>
+                        <th className="px-6 py-4 font-black">{isRtl ? 'الجوال' : 'Phone'}</th>
+                        <th className="px-6 py-4 font-black text-center">{isRtl ? 'التقييم العام' : 'Overall'}</th>
+                        <th className="px-6 py-4 font-black">{isRtl ? 'التعليق' : 'Comment'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredData.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium italic">
+                            {isRtl ? 'لا توجد بيانات مطابقة للفلاتر' : 'No data matching filters'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredData.map((item, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4 font-bold text-slate-900 whitespace-nowrap">
+                              {item.timestamp}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">{item.branch}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {isRtl ? (
+                                item.department === 'Physiotherapy' ? 'علاج طبيعي' : 
+                                item.department === 'MRI Scan' ? 'أشعة رنين' : 
+                                item.department === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
+                                'كشف طبيب'
+                              ) : item.department}
+                            </td>
+                            <td className="px-6 py-4 font-medium text-slate-700">{item.userName || '-'}</td>
+                            <td className="px-6 py-4 font-mono text-xs">{item.userPhone || '-'}</td>
+                            <td className="px-6 py-4 text-center">
+                              <span className={cn(
+                                "px-3 py-1 rounded-full font-black text-xs",
+                                parseInt(item.overall_exp) >= 4 ? "bg-emerald-50 text-emerald-600" : 
+                                parseInt(item.overall_exp) === 3 ? "bg-amber-50 text-amber-600" : 
+                                "bg-red-50 text-red-600"
+                              )}>
+                                {item.overall_exp}/5
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 max-w-xs truncate" title={item.comment}>
+                              {item.comment || '-'}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </motion.div>

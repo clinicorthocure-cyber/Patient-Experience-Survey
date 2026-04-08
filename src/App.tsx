@@ -309,9 +309,38 @@ export default function App() {
 
     printWindow.document.write('<html><head><title>Print</title>');
     printWindow.document.write('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">');
-    printWindow.document.write('<style>body { font-family: sans-serif; padding: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; } .no-print { display: none; }</style>');
+    printWindow.document.write('<style>');
+    printWindow.document.write(`
+      @page { size: A4; margin: 15mm; }
+      body { font-family: sans-serif; padding: 0; margin: 0; color: #333; line-height: 1.4; }
+      .print-container { width: 100%; max-width: 100%; overflow: hidden; }
+      h2, h3 { color: #1e40af; margin-bottom: 15px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; word-wrap: break-word; }
+      th, td { border: 1px solid #e2e8f0; padding: 4px 6px; text-align: ${isRtl ? 'right' : 'left'}; font-size: 8pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      th { background-color: #f8fafc; font-weight: bold; color: #475569; font-size: 7pt; }
+      .no-print { display: none !important; }
+      .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+      .stat-card { border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; }
+      .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
+      .chart-container { border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; height: 300px; page-break-inside: avoid; }
+      .service-analysis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; page-break-inside: avoid; }
+      .progress-bar { height: 10px; background-color: #f1f5f9; border-radius: 999px; margin-top: 5px; overflow: hidden; }
+      .progress-fill { height: 100%; background-color: #3b82f6; }
+      .badge { padding: 2px 8px; border-radius: 999px; font-size: 8pt; font-weight: bold; }
+      .bg-emerald-50 { background-color: #ecfdf5; color: #059669; }
+      .bg-amber-50 { background-color: #fffbeb; color: #d97706; }
+      .bg-red-50 { background-color: #fef2f2; color: #dc2626; }
+      img { max-width: 150px; margin-bottom: 20px; }
+      @media print {
+        body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      }
+    `);
+    printWindow.document.write('</style>');
     printWindow.document.write('</head><body dir="' + (isRtl ? 'rtl' : 'ltr') + '">');
+    printWindow.document.write('<div class="print-container">');
+    printWindow.document.write('<img src="' + LOGO_URL + '" alt="Logo" />');
     printWindow.document.write(printContent.innerHTML);
+    printWindow.document.write('</div>');
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.focus();
@@ -319,6 +348,34 @@ export default function App() {
       printWindow.print();
       printWindow.close();
     }, 500);
+  };
+
+  const getBranchAbbr = (b: string) => {
+    if (b === 'Orthocure Mirdif Branch') return 'OMB';
+    if (b === 'Orthocure Jumeirah Branch') return 'OJB';
+    return b;
+  };
+
+  const formatTimestamp = (ts: string) => {
+    if (!ts) return '-';
+    try {
+      const date = new Date(ts);
+      if (isNaN(date.getTime())) {
+        return ts.substring(0, 16).replace('T', '  ');
+      }
+      
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      
+      if (y < 2000) return ts.substring(0, 16).replace('T', '  ');
+      
+      return `${y}-${m}-${d}  ${h}:${min}`;
+    } catch (e) {
+      return ts.substring(0, 16).replace('T', '  ');
+    }
   };
 
   // Dashboard Stats Calculations
@@ -930,7 +987,7 @@ export default function App() {
               key="dashboard"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-8 pb-20"
+              className="dashboard-container space-y-8 pb-20"
             >
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div>
@@ -998,11 +1055,10 @@ export default function App() {
                 </div>
               </div>
 
-              <div id="dashboard-stats" className="space-y-8">
-
-              {/* Main Stats Bento Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+              <div id="dashboard-stats" className="space-y-8 print-container">
+                {/* Main Stats Bento Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 stats-grid">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between stat-card">
                   <div>
                     <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4">
                       <ClipboardList size={20} />
@@ -1014,7 +1070,7 @@ export default function App() {
                   <p className="text-4xl font-black text-blue-900 mt-2">{totalResponses}</p>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between stat-card">
                   <div>
                     <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
                       <CheckCircle2 size={20} />
@@ -1029,7 +1085,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between stat-card">
                   <div>
                     <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-4">
                       <Star size={20} />
@@ -1041,7 +1097,7 @@ export default function App() {
                   <p className="text-4xl font-black text-slate-800 mt-2">{avgCleanliness}<span className="text-lg text-slate-300">/5</span></p>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col justify-between stat-card">
                   <div>
                     <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-4">
                       <Globe size={20} />
@@ -1056,10 +1112,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Charts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Department Performance Bar Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 charts-grid">
+                  {/* Department Performance Bar Chart */}
+                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 chart-container">
                   <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
                     <BarChart3 size={20} className="text-blue-600" />
                     {isRtl ? 'أداء الأقسام (متوسط التقييم)' : 'Department Performance (Avg Rating)'}
@@ -1088,7 +1144,7 @@ export default function App() {
                 </div>
 
                 {/* Responses Distribution Pie Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 chart-container">
                   <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
                     <ChartPie size={20} className="text-blue-600" />
                     {isRtl ? 'توزيع المراجعين حسب القسم' : 'Patient Distribution by Dept'}
@@ -1137,7 +1193,7 @@ export default function App() {
                   <h3 className="text-xl font-bold text-slate-800 mb-8">
                     {isRtl ? 'تحليل معايير الخدمة' : 'Service Standards Analysis'}
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 service-analysis">
                     {[
                       { label: isRtl ? 'الاستقبال' : 'Reception', val: avgReception, color: 'bg-blue-500' },
                       { label: isRtl ? 'النظافة' : 'Cleanliness', val: avgCleanliness, color: 'bg-emerald-500' },
@@ -1148,11 +1204,11 @@ export default function App() {
                           <span className="font-bold text-slate-700">{item.label}</span>
                           <span className="text-2xl font-black text-slate-900">{item.val}<span className="text-sm text-slate-300">/5</span></span>
                         </div>
-                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden progress-bar">
                           <motion.div 
                             initial={{ width: 0 }}
                             animate={{ width: `${(parseFloat(item.val) / 5) * 100}%` }}
-                            className={cn("h-full rounded-full", item.color)}
+                            className={cn("h-full rounded-full progress-fill", item.color)}
                           />
                         </div>
                       </div>
@@ -1178,34 +1234,34 @@ export default function App() {
                   </button>
                 </div>
 
-                <div id="responses-table" className="overflow-x-auto">
-                  <table className="w-full text-sm text-left rtl:text-right text-slate-500">
-                    <thead className="text-xs text-slate-700 uppercase bg-slate-50 rounded-xl">
+                <div id="responses-table" className="table-container !shadow-none !border-slate-100">
+                  <table className="w-full text-[11px] sm:text-xs text-left rtl:text-right text-slate-500 table-fixed">
+                    <thead className="text-[10px] text-slate-700 uppercase bg-slate-50">
                       <tr>
-                        <th className="px-6 py-4 font-black">{isRtl ? 'التاريخ والوقت' : 'Date & Time'}</th>
-                        <th className="px-6 py-4 font-black">{isRtl ? 'الفرع' : 'Branch'}</th>
-                        <th className="px-6 py-4 font-black">{isRtl ? 'القسم' : 'Dept'}</th>
-                        <th className="px-6 py-4 font-black">{isRtl ? 'الاسم' : 'Name'}</th>
-                        <th className="px-6 py-4 font-black">{isRtl ? 'الجوال' : 'Phone'}</th>
-                        <th className="px-6 py-4 font-black text-center">{isRtl ? 'التقييم العام' : 'Overall'}</th>
-                        <th className="px-6 py-4 font-black">{isRtl ? 'التعليق' : 'Comment'}</th>
+                        <th className="px-2 py-3 font-black" style={{ width: '18%' }}>{isRtl ? 'التاريخ' : 'Date'}</th>
+                        <th className="px-2 py-3 font-black" style={{ width: '8%' }}>{isRtl ? 'الفرع' : 'Br'}</th>
+                        <th className="px-2 py-3 font-black" style={{ width: '14%' }}>{isRtl ? 'القسم' : 'Dept'}</th>
+                        <th className="px-2 py-3 font-black" style={{ width: '15%' }}>{isRtl ? 'الاسم' : 'Name'}</th>
+                        <th className="px-2 py-3 font-black" style={{ width: '12%' }}>{isRtl ? 'الجوال' : 'Phone'}</th>
+                        <th className="px-2 py-3 font-black text-center" style={{ width: '8%' }}>{isRtl ? 'تقييم' : 'Rate'}</th>
+                        <th className="px-2 py-3 font-black" style={{ width: '25%' }}>{isRtl ? 'التعليق' : 'Comment'}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-50">
                       {filteredData.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="px-6 py-12 text-center text-slate-400 font-medium italic">
+                          <td colSpan={7} className="px-4 py-8 text-center text-slate-400 font-medium italic">
                             {isRtl ? 'لا توجد بيانات مطابقة للفلاتر' : 'No data matching filters'}
                           </td>
                         </tr>
                       ) : (
                         filteredData.map((item, idx) => (
                           <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                            <td className="px-6 py-4 font-bold text-slate-900 whitespace-nowrap">
-                              {item.timestamp}
+                            <td className="px-2 py-2 font-bold text-slate-900 truncate">
+                              {formatTimestamp(item.timestamp)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">{item.branch}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-2 py-2 font-black text-blue-600">{getBranchAbbr(item.branch)}</td>
+                            <td className="px-2 py-2 truncate">
                               {isRtl ? (
                                 item.department === 'Physiotherapy' ? 'علاج طبيعي' : 
                                 item.department === 'MRI Scan' ? 'أشعة رنين' : 
@@ -1213,19 +1269,19 @@ export default function App() {
                                 'كشف طبيب'
                               ) : item.department}
                             </td>
-                            <td className="px-6 py-4 font-medium text-slate-700">{item.userName || '-'}</td>
-                            <td className="px-6 py-4 font-mono text-xs">{item.userPhone || '-'}</td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-2 py-2 font-medium text-slate-700 truncate">{item.userName || '-'}</td>
+                            <td className="px-2 py-2 font-mono text-[10px]">{item.userPhone || '-'}</td>
+                            <td className="px-2 py-2 text-center">
                               <span className={cn(
-                                "px-3 py-1 rounded-full font-black text-xs",
+                                "px-2 py-0.5 rounded-full font-black text-[10px] badge",
                                 parseInt(item.overall_exp) >= 4 ? "bg-emerald-50 text-emerald-600" : 
                                 parseInt(item.overall_exp) === 3 ? "bg-amber-50 text-amber-600" : 
                                 "bg-red-50 text-red-600"
                               )}>
-                                {item.overall_exp}/5
+                                {item.overall_exp}
                               </span>
                             </td>
-                            <td className="px-6 py-4 max-w-xs truncate" title={item.comment}>
+                            <td className="px-2 py-2 truncate text-[10px]" title={item.comment}>
                               {item.comment || '-'}
                             </td>
                           </tr>

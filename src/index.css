@@ -17,3 +17,13 @@ body {
 .font-inter {
   font-family: "Inter", sans-serif;
 }
+
+@layer utilities {
+  .dashboard-container {
+    @apply max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .table-container {
+    @apply overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm;
+  }
+}

@@ -1120,6 +1120,34 @@ export default function App() {
                 </div>
                 </div>
 
+                {/* Category Averages */}
+                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 lg:col-span-2">
+                  <h3 className="text-xl font-bold text-slate-800 mb-8">
+                    {isRtl ? 'تحليل معايير الخدمة' : 'Service Standards Analysis'}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 service-analysis">
+                    {[
+                      { label: isRtl ? 'الاستقبال' : 'Reception', val: avgReception, color: 'bg-blue-500' },
+                      { label: isRtl ? 'النظافة' : 'Cleanliness', val: avgCleanliness, color: 'bg-emerald-500' },
+                      { label: isRtl ? 'الاحترافية' : 'Professionalism', val: avgDoctorProf, color: 'bg-purple-500' },
+                    ].map((item) => (
+                      <div key={item.label} className="space-y-3">
+                        <div className="flex justify-between items-end">
+                          <span className="font-bold text-slate-700">{item.label}</span>
+                          <span className="text-2xl font-black text-slate-900">{item.val}<span className="text-sm text-slate-300">/5</span></span>
+                        </div>
+                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden progress-bar">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(parseFloat(item.val) / 5) * 100}%` }}
+                            className={cn("h-full rounded-full progress-fill", item.color)}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 charts-grid items-stretch">
                   {/* Department Performance Bar Chart */}
@@ -1200,34 +1228,6 @@ export default function App() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                </div>
-
-                {/* Category Averages */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 lg:col-span-2">
-                  <h3 className="text-xl font-bold text-slate-800 mb-8">
-                    {isRtl ? 'تحليل معايير الخدمة' : 'Service Standards Analysis'}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 service-analysis">
-                    {[
-                      { label: isRtl ? 'الاستقبال' : 'Reception', val: avgReception, color: 'bg-blue-500' },
-                      { label: isRtl ? 'النظافة' : 'Cleanliness', val: avgCleanliness, color: 'bg-emerald-500' },
-                      { label: isRtl ? 'الاحترافية' : 'Professionalism', val: avgDoctorProf, color: 'bg-purple-500' },
-                    ].map((item) => (
-                      <div key={item.label} className="space-y-3">
-                        <div className="flex justify-between items-end">
-                          <span className="font-bold text-slate-700">{item.label}</span>
-                          <span className="text-2xl font-black text-slate-900">{item.val}<span className="text-sm text-slate-300">/5</span></span>
-                        </div>
-                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden progress-bar">
-                          <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(parseFloat(item.val) / 5) * 100}%` }}
-                            className={cn("h-full rounded-full progress-fill", item.color)}
-                          />
-                        </div>
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>

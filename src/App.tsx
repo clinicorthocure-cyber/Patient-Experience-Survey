@@ -34,6 +34,12 @@ import { cn } from './lib/utils';
 import { SURVEY_QUESTIONS, Language, Question, SurveyResponse, Branch } from './types';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
+const DEPT_COLORS: Record<string, string> = {
+  'Doctor Consultation': '#3b82f6',
+  'MRI Scan': '#10b981',
+  'Physiotherapy': '#f59e0b',
+  'Kinesiology & Rehabilitation': '#8b5cf6',
+};
 const LOGO_URL = "https://imgur.com/TOW5WAS.jpeg";
 
 const BRANCHES: Branch[] = ['Orthocure Jumeirah Branch', 'Orthocure Mirdif Branch'];
@@ -317,8 +323,9 @@ export default function App() {
       .print-container { width: 100%; max-width: 100%; overflow: hidden; }
       h2, h3 { color: #1e40af; margin-bottom: 15px; }
       table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; word-wrap: break-word; }
-      th, td { border: 1px solid #e2e8f0; padding: 4px 6px; text-align: ${isRtl ? 'right' : 'left'}; font-size: 8pt; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      th { background-color: #f8fafc; font-weight: bold; color: #475569; font-size: 7pt; }
+      th, td { border: 1px solid #e2e8f0; padding: 4px 6px; text-align: ${isRtl ? 'right' : 'left'}; font-size: 8pt; }
+      td { word-break: break-word; white-space: normal; }
+      th { background-color: #f8fafc; font-weight: bold; color: #475569; font-size: 7pt; white-space: nowrap; }
       .no-print { display: none !important; }
       .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
       .stat-card { border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; }
@@ -1140,7 +1147,7 @@ export default function App() {
                           />
                           <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={30}>
                             {deptPerformance.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              <Cell key={`cell-${index}`} fill={DEPT_COLORS[entry.name] || COLORS[index % COLORS.length]} />
                             ))}
                             <LabelList dataKey="score" position="right" style={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} />
                           </Bar>
@@ -1169,7 +1176,7 @@ export default function App() {
                             label={({ value }) => `${value}`}
                           >
                             {pieData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                              <Cell key={`cell-${index}`} fill={DEPT_COLORS[entry.name] || COLORS[index % COLORS.length]} stroke="none" />
                             ))}
                           </Pie>
                           <Tooltip 
@@ -1181,7 +1188,7 @@ export default function App() {
                     <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-6">
                       {pieData.map((entry, index) => (
                         <div key={entry.name} className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: DEPT_COLORS[entry.name] || COLORS[index % COLORS.length] }} />
                           <span className="text-xs font-bold text-slate-500">
                             {isRtl ? (
                               entry.name === 'Physiotherapy' ? 'علاج طبيعي' : 
@@ -1288,7 +1295,7 @@ export default function App() {
                                 {item.overall_exp}
                               </span>
                             </td>
-                            <td className="px-2 py-2 truncate text-[10px]" title={item.comment}>
+                            <td className="px-2 py-2 text-[10px] leading-relaxed whitespace-normal break-words" title={item.comment}>
                               {item.comment || '-'}
                             </td>
                           </tr>

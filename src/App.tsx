@@ -27,12 +27,13 @@ import {
   ResponsiveContainer, 
   PieChart, 
   Pie, 
-  Cell 
+  Cell,
+  LabelList
 } from 'recharts';
 import { cn } from './lib/utils';
 import { SURVEY_QUESTIONS, Language, Question, SurveyResponse, Branch } from './types';
 
-const COLORS = ['#1e40af', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'];
 const LOGO_URL = "https://imgur.com/TOW5WAS.jpeg";
 
 const BRANCHES: Branch[] = ['Orthocure Jumeirah Branch', 'Orthocure Mirdif Branch'];
@@ -1110,81 +1111,88 @@ export default function App() {
                     {langStats['ar'] >= (langStats['en'] || 0) ? (isRtl ? 'العربية' : 'Arabic') : (isRtl ? 'الإنجليزية' : 'English')}
                   </p>
                 </div>
-              </div>
-
-                {/* Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 charts-grid">
-                  {/* Department Performance Bar Chart */}
-                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 chart-container">
-                  <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
-                    <BarChart3 size={20} className="text-blue-600" />
-                    {isRtl ? 'أداء الأقسام (متوسط التقييم)' : 'Department Performance (Avg Rating)'}
-                  </h3>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={deptPerformance} layout="vertical" margin={{ left: 40 }}>
-                        <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                        <XAxis type="number" domain={[0, 5]} hide />
-                        <YAxis 
-                          dataKey="name" 
-                          type="category" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }}
-                          width={100}
-                        />
-                        <Tooltip 
-                          cursor={{ fill: '#f8fafc' }}
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        />
-                        <Bar dataKey="score" fill="#3b82f6" radius={[0, 6, 6, 0]} barSize={30} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
                 </div>
 
-                {/* Responses Distribution Pie Chart */}
-                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 chart-container">
-                  <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
-                    <ChartPie size={20} className="text-blue-600" />
-                    {isRtl ? 'توزيع المراجعين حسب القسم' : 'Patient Distribution by Dept'}
-                  </h3>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={70}
-                          outerRadius={100}
-                          paddingAngle={8}
-                          dataKey="value"
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 charts-grid items-stretch">
+                  {/* Department Performance Bar Chart */}
+                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 chart-container flex flex-col h-full">
+                    <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                      <BarChart3 size={20} className="text-blue-600" />
+                      {isRtl ? 'أداء الأقسام (متوسط التقييم)' : 'Department Performance (Avg Rating)'}
+                    </h3>
+                    <div className="flex-grow min-h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={deptPerformance} layout="vertical" margin={{ left: 40, right: 40 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
+                          <XAxis type="number" domain={[0, 5]} hide />
+                          <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fill: '#64748b', fontSize: 13, fontWeight: 600 }}
+                            width={100}
+                          />
+                          <Tooltip 
+                            cursor={{ fill: '#f8fafc' }}
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                          />
+                          <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={30}>
+                            {deptPerformance.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                            <LabelList dataKey="score" position="right" style={{ fill: '#64748b', fontSize: 12, fontWeight: 'bold' }} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap justify-center gap-4 mt-4">
-                    {pieData.map((entry, index) => (
-                      <div key={entry.name} className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                        <span className="text-xs font-bold text-slate-500">
-                          {isRtl ? (
-                            entry.name === 'Physiotherapy' ? 'علاج طبيعي' : 
-                            entry.name === 'MRI Scan' ? 'أشعة رنين' : 
-                            entry.name === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
-                            'كشف طبيب'
-                          ) : entry.name}
-                        </span>
-                      </div>
-                    ))}
+
+                  {/* Responses Distribution Pie Chart */}
+                  <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 chart-container flex flex-col h-full">
+                    <h3 className="text-xl font-bold text-slate-800 mb-8 flex items-center gap-2">
+                      <ChartPie size={20} className="text-blue-600" />
+                      {isRtl ? 'توزيع المراجعين حسب القسم' : 'Patient Distribution by Dept'}
+                    </h3>
+                    <div className="flex-grow min-h-[300px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={70}
+                            outerRadius={100}
+                            paddingAngle={8}
+                            dataKey="value"
+                            label={({ value }) => `${value}`}
+                          >
+                            {pieData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-6">
+                      {pieData.map((entry, index) => (
+                        <div key={entry.name} className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                          <span className="text-xs font-bold text-slate-500">
+                            {isRtl ? (
+                              entry.name === 'Physiotherapy' ? 'علاج طبيعي' : 
+                              entry.name === 'MRI Scan' ? 'أشعة رنين' : 
+                              entry.name === 'Kinesiology & Rehabilitation' ? 'تأهيل حركي' :
+                              'كشف طبيب'
+                            ) : entry.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -1216,7 +1224,6 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Responses Table Section */}
               <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 mt-12">
